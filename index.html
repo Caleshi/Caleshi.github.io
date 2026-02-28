@@ -2,16 +2,61 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Caleshi's Site</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Caleshi | Portfolio</title>
     <style>
-        body { font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; background: #f0f2f5; }
-        .card { background: white; padding: 2rem; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        * { margin: 0; padding: 0; box-box-sizing: border-box; }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            /* A vibrant gradient background to show through the glass */
+            background: linear-gradient(45deg, #00d2ff 0%, #3a7bd5 100%);
+            overflow: hidden;
+        }
+
+        .glass-card {
+            /* The "Glass" Effect */
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 20px;
+            
+            /* Styling */
+            padding: 40px;
+            width: 90%;
+            max-width: 500px;
+            text-align: center;
+            color: white;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+        }
+
+        h1 { font-size: 2.5rem; margin-bottom: 10px; font-weight: 600; }
+        p { font-size: 1.1rem; opacity: 0.9; line-height: 1.6; }
+        
+        .profile-circles {
+            position: absolute;
+            z-index: -1;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.1);
+        }
     </style>
 </head>
 <body>
-    <div class="card">
-        <h1>Welcome to my GitHub Page</h1>
-        <p>This site is officially live.</p>
+
+    <div class="profile-circles" style="width: 300px; height: 300px; top: -50px; left: -50px;"></div>
+    <div class="profile-circles" style="width: 200px; height: 200px; bottom: -30px; right: -30px;"></div>
+
+    <div class="glass-card">
+        <h1>Caleshi</h1>
+        <p>Statistics & Data Science</p>
+        <hr style="margin: 20px 0; border: 0; border-top: 1px solid rgba(255,255,255,0.2);">
+        <p>Building meaningful insights through data and modern design.</p>
     </div>
+
 </body>
 </html>
