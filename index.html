@@ -5,58 +5,72 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Caleshi | Portfolio</title>
     <style>
-        * { margin: 0; padding: 0; box-box-sizing: border-box; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
             height: 100vh;
             display: flex;
             justify-content: center;
             align-items: center;
-            /* A vibrant gradient background to show through the glass */
-            background: linear-gradient(45deg, #00d2ff 0%, #3a7bd5 100%);
+            /* Vibrant background for the glass to pop against */
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             overflow: hidden;
         }
 
         .glass-card {
-            /* The "Glass" Effect */
-            background: rgba(255, 255, 255, 0.15);
+            background: rgba(255, 255, 255, 0.1);
             backdrop-filter: blur(15px);
             -webkit-backdrop-filter: blur(15px);
             border: 1px solid rgba(255, 255, 255, 0.2);
-            border-radius: 20px;
-            
-            /* Styling */
+            border-radius: 24px;
             padding: 40px;
             width: 90%;
-            max-width: 500px;
+            max-width: 450px;
             text-align: center;
             color: white;
-            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
         }
 
-        h1 { font-size: 2.5rem; margin-bottom: 10px; font-weight: 600; }
-        p { font-size: 1.1rem; opacity: 0.9; line-height: 1.6; }
+        h1 { font-size: 2.2rem; margin-bottom: 8px; font-weight: 700; letter-spacing: -0.5px; }
+        .subtitle { font-size: 1rem; opacity: 0.8; margin-bottom: 25px; text-transform: uppercase; letter-spacing: 1.5px; }
         
-        .profile-circles {
-            position: absolute;
-            z-index: -1;
-            border-radius: 50%;
-            background: rgba(255, 255, 255, 0.1);
+        /* Button Styles */
+        .btn-container {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-top: 20px;
         }
+
+        .glass-btn {
+            text-decoration: none;
+            color: white;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 14px 20px;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            font-weight: 500;
+            transition: all 0.3s ease;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* Hover Effects */
+        .glass-btn:hover {
+            background: rgba(255, 255, 255, 0.25);
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .glass-btn:active { transform: translateY(0); }
+
+        /* Decorative circles */
+        .shape { position: absolute; z-index: -1; border-radius: 50%; background: rgba(255, 255, 255, 0.15); }
     </style>
 </head>
 <body>
 
-    <div class="profile-circles" style="width: 300px; height: 300px; top: -50px; left: -50px;"></div>
-    <div class="profile-circles" style="width: 200px; height: 200px; bottom: -30px; right: -30px;"></div>
-
-    <div class="glass-card">
-        <h1>Caleshi</h1>
-        <p>Statistics & Data Science</p>
-        <hr style="margin: 20px 0; border: 0; border-top: 1px solid rgba(255,255,255,0.2);">
-        <p>Building meaningful insights through data and modern design.</p>
-    </div>
-
-</body>
-</html>
+    <div class="shape" style="width: 400px; height: 400px; top: -100px; left: -100px;"></div>
+    <div class="shape" style="width: 250px; height: 250px; bottom: -50px; right:
