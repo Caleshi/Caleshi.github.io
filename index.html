@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Caleshi | Portfolio</title>
+    <title>Caleb Martins | Statistics</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         
@@ -13,15 +14,14 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            /* Vibrant background for the glass to pop against */
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #1e3a8a 0%, #7c3aed 100%);
             overflow: hidden;
         }
 
         .glass-card {
             background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(15px);
-            -webkit-backdrop-filter: blur(15px);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
             border: 1px solid rgba(255, 255, 255, 0.2);
             border-radius: 24px;
             padding: 40px;
@@ -29,48 +29,85 @@
             max-width: 450px;
             text-align: center;
             color: white;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
         }
 
-        h1 { font-size: 2.2rem; margin-bottom: 8px; font-weight: 700; letter-spacing: -0.5px; }
-        .subtitle { font-size: 1rem; opacity: 0.8; margin-bottom: 25px; text-transform: uppercase; letter-spacing: 1.5px; }
+        h1 { font-size: 2.2rem; margin-bottom: 5px; font-weight: 700; }
+        .subtitle { font-size: 0.9rem; opacity: 0.8; margin-bottom: 30px; text-transform: uppercase; letter-spacing: 2px; }
         
-        /* Button Styles */
         .btn-container {
             display: flex;
             flex-direction: column;
-            gap: 12px;
-            margin-top: 20px;
+            gap: 15px;
         }
 
         .glass-btn {
             text-decoration: none;
             color: white;
-            background: rgba(255, 255, 255, 0.1);
-            padding: 14px 20px;
-            border-radius: 12px;
-            border: 1px solid rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, 0.08);
+            padding: 14px;
+            border-radius: 14px;
+            border: 1px solid rgba(255, 255, 255, 0.15);
             font-weight: 500;
-            transition: all 0.3s ease;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             display: flex;
-            justify-content: center;
             align-items: center;
+            justify-content: center;
+            gap: 10px;
         }
 
-        /* Hover Effects */
         .glass-btn:hover {
-            background: rgba(255, 255, 255, 0.25);
-            transform: translateY(-3px);
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-4px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+            border-color: rgba(255, 255, 255, 0.4);
         }
 
-        .glass-btn:active { transform: translateY(0); }
+        .email-section {
+            margin-top: 25px;
+            font-size: 0.85rem;
+            opacity: 0.9;
+            text-align: left;
+            background: rgba(0, 0, 0, 0.2);
+            padding: 15px;
+            border-radius: 12px;
+        }
 
-        /* Decorative circles */
-        .shape { position: absolute; z-index: -1; border-radius: 50%; background: rgba(255, 255, 255, 0.15); }
+        .email-link {
+            color: #60a5fa;
+            text-decoration: none;
+            display: block;
+            margin-top: 5px;
+        }
+
+        .shape { position: absolute; z-index: -1; border-radius: 50%; background: rgba(255, 255, 255, 0.1); }
     </style>
 </head>
 <body>
 
-    <div class="shape" style="width: 400px; height: 400px; top: -100px; left: -100px;"></div>
-    <div class="shape" style="width: 250px; height: 250px; bottom: -50px; right:
+    <div class="shape" style="width: 500px; height: 500px; top: -150px; left: -150px;"></div>
+    <div class="shape" style="width: 300px; height: 300px; bottom: -80px; right: -50px;"></div>
+
+    <div class="glass-card">
+        <h1>Caleb Martins</h1>
+        <p class="subtitle">Statistics Student @ UFPE</p>
+        
+        <div class="btn-container">
+            <a href="https://www.linkedin.com/in/caleb-martins-a1192a257/" class="glass-btn" target="_blank">
+                <i class="fab fa-linkedin"></i> LinkedIn Profile
+            </a>
+            
+            <a href="https://github.com/Caleshi/Working-in-Excel" class="glass-btn" target="_blank">
+                <i class="fas fa-file-excel"></i> Excel Repository
+            </a>
+        </div>
+
+        <div class="email-section">
+            <p><i class="fas fa-envelope"></i> <strong>Contact Me:</strong></p>
+            <a href="mailto:caleb.falcao@ufpe.br" class="email-link">caleb.falcao@ufpe.br</a>
+            <a href="mailto:calebmfalcao@gmail.com" class="email-link">calebmfalcao@gmail.com</a>
+        </div>
+    </div>
+
+</body>
+</html>
