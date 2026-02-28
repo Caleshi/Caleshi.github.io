@@ -3,113 +3,148 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Caleb Martins | Statistics</title>
+    <title>Caleb Martins | Statistics & Data</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         
         body {
             font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-            height: 100vh;
+            min-height: 100vh;
             display: flex;
             justify-content: center;
             align-items: center;
-            background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);
-            overflow: hidden;
+            /* Deep modern gradient */
+            background: linear-gradient(135deg, #0f172a 0%, #334155 100%);
+            overflow-x: hidden;
+            padding: 20px;
         }
 
         .glass-card {
-            background: rgba(255, 255, 255, 0.1);
+            background: rgba(255, 255, 255, 0.05);
             backdrop-filter: blur(20px);
             -webkit-backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            border-radius: 24px;
-            padding: 40px;
-            width: 90%;
-            max-width: 450px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 28px;
+            padding: 40px 30px;
+            width: 100%;
+            max-width: 420px;
             text-align: center;
             color: white;
-            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
         }
 
-        h1 { font-size: 2.2rem; margin-bottom: 5px; font-weight: 700; }
-        .subtitle { font-size: 0.9rem; opacity: 0.8; margin-bottom: 30px; text-transform: uppercase; letter-spacing: 2px; }
+        /* The Open Source Stamp */
+        .stamp {
+            display: inline-flex;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 6px 16px;
+            border-radius: 50px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            font-size: 0.7rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 1.2px;
+            margin-bottom: 25px;
+            color: #f8fafc;
+        }
+        .stamp i { color: #ef4444; margin-right: 6px; }
+
+        h1 { font-size: 2rem; margin-bottom: 5px; font-weight: 700; }
+        .subtitle { font-size: 0.85rem; opacity: 0.7; margin-bottom: 25px; letter-spacing: 1px; }
         
-        .btn-container {
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-        }
-
+        /* Links Section */
+        .btn-container { display: flex; flex-direction: column; gap: 12px; margin-bottom: 30px; }
+        
         .glass-btn {
             text-decoration: none;
             color: white;
-            background: rgba(255, 255, 255, 0.08);
+            background: rgba(255, 255, 255, 0.05);
             padding: 14px;
-            border-radius: 14px;
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            font-weight: 500;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
             display: flex;
             align-items: center;
             justify-content: center;
             gap: 10px;
+            font-weight: 500;
         }
 
         .glass-btn:hover {
-            background: rgba(255, 255, 255, 0.2);
-            transform: translateY(-4px);
-            box-shadow: 0 8px 20px rgba(0,0,0,0.2);
-            border-color: rgba(255, 255, 255, 0.4);
+            background: rgba(255, 255, 255, 0.15);
+            transform: translateY(-3px);
+            border-color: rgba(255, 255, 255, 0.3);
         }
 
-        .email-section {
-            margin-top: 25px;
-            font-size: 0.85rem;
-            opacity: 0.9;
-            text-align: left;
+        /* Skills Section */
+        .skills-title { font-size: 0.75rem; text-transform: uppercase; opacity: 0.5; margin-bottom: 15px; letter-spacing: 2px; }
+        .skills-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+        .skill-item {
+            background: rgba(255, 255, 255, 0.03);
+            padding: 15px 5px;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            font-size: 0.7rem;
+        }
+        .skill-item i { font-size: 1.4rem; display: block; margin-bottom: 8px; }
+        .fa-r-project { color: #276dc3; }
+        .fa-python { color: #ffd43b; }
+        .fa-file-excel { color: #1d6f42; }
+
+        /* Contact Section */
+        .contact-box {
             background: rgba(0, 0, 0, 0.2);
             padding: 15px;
-            border-radius: 12px;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            text-align: left;
         }
+        .contact-box a { color: #60a5fa; text-decoration: none; display: block; margin-top: 4px; overflow: hidden; text-overflow: ellipsis; }
 
-        .email-link {
-            color: #60a5fa;
-            text-decoration: none;
-            display: block;
-            margin-top: 5px;
-        }
-
-        .shape { position: absolute; z-index: -1; border-radius: 50%; background: rgba(255, 255, 255, 0.1); }
+        /* Background Shapes */
+        .shape { position: absolute; z-index: -1; border-radius: 50%; filter: blur(60px); opacity: 0.4; }
     </style>
 </head>
 <body>
 
-    <div class="shape" style="width: 500px; height: 500px; top: -150px; left: -150px;"></div>
-    <div class="shape" style="width: 300px; height: 300px; bottom: -80px; right: -50px;"></div>
+    <div class="shape" style="width: 300px; height: 300px; top: 10%; left: 15%; background: #3b82f6;"></div>
+    <div class="shape" style="width: 250px; height: 250px; bottom: 10%; right: 15%; background: #8b5cf6;"></div>
 
     <div class="glass-card">
-        <div style="display: inline-block; background: rgba(255, 255, 255, 0.2); padding: 5px 15px; border-radius: 50px; border: 1px solid rgba(255, 255, 255, 0.3); font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 20px;">
-            <i class="fas fa-heart" style="color: #ff4d4d; margin-right: 5px;"></i> I Love Open-Source
+        <div class="stamp">
+            <i class="fas fa-heart"></i> I Love Open-Source
         </div>
 
         <h1>Caleb Martins</h1>
-        <p class="subtitle">Statistics Student @ UFPE</p>
+        <p class="subtitle">Statistics @ UFPE</p>
         
         <div class="btn-container">
             <a href="https://www.linkedin.com/in/caleb-martins-a1192a257/" class="glass-btn" target="_blank">
-                <i class="fab fa-linkedin"></i> LinkedIn Profile
+                <i class="fab fa-linkedin"></i> LinkedIn
             </a>
-            
             <a href="https://github.com/Caleshi/Working-in-Excel" class="glass-btn" target="_blank">
-                <i class="fas fa-file-excel"></i> Excel Repository
+                <i class="fas fa-file-excel"></i> Excel Projects
             </a>
         </div>
 
-        <div class="email-section">
-            <p><i class="fas fa-envelope"></i> <strong>Contact Me:</strong></p>
-            <a href="mailto:caleb.falcao@ufpe.br" class="email-link">caleb.falcao@ufpe.br</a>
-            <a href="mailto:calebmfalcao@gmail.com" class="email-link">calebmfalcao@gmail.com</a>
+        <p class="skills-title">Core Skills</p>
+        <div class="skills-grid">
+            <div class="skill-item"><i class="fab fa-r-project"></i>R Stats</div>
+            <div class="skill-item"><i class="fab fa-python"></i>Python</div>
+            <div class="skill-item"><i class="fas fa-table"></i>Analysis</div>
+        </div>
+
+        <div class="contact-box">
+            <p style="opacity: 0.6; font-weight: 600; font-size: 0.7rem; text-transform: uppercase;">Get in touch</p>
+            <a href="mailto:caleb.falcao@ufpe.br">caleb.falcao@ufpe.br</a>
+            <a href="mailto:calebmfalcao@gmail.com">calebmfalcao@gmail.com</a>
         </div>
     </div>
 
