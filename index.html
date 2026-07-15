@@ -4,17 +4,23 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Caleb Martins | Statistics & Data</title>
+    <meta name="description" content="Caleb Martins — Statistics student at UFPE. Data analysis, R, Python, and open-source projects.">
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Caleb Martins | Statistics & Data">
+    <meta property="og:description" content="Statistics student at UFPE working with R, Python, and data analysis.">
+    <meta property="og:url" content="https://caleshi.github.io/">
+    <meta name="theme-color" content="#0f172a">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='18' fill='%230f172a'/><text y='72' x='50' text-anchor='middle' font-size='68' font-family='Segoe UI,system-ui,sans-serif' font-weight='700' fill='%2360a5fa'>C</text></svg>">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        
+
         body {
             font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
             min-height: 100vh;
             display: flex;
             justify-content: center;
             align-items: center;
-            /* Deep modern gradient */
             background: linear-gradient(135deg, #0f172a 0%, #334155 100%);
             overflow-x: hidden;
             padding: 20px;
@@ -34,7 +40,6 @@
             box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
         }
 
-        /* The Open Source Stamp */
         .stamp {
             display: inline-flex;
             align-items: center;
@@ -52,11 +57,10 @@
         .stamp i { color: #ef4444; margin-right: 6px; }
 
         h1 { font-size: 2rem; margin-bottom: 5px; font-weight: 700; }
-        .subtitle { font-size: 0.85rem; opacity: 0.7; margin-bottom: 25px; letter-spacing: 1px; }
-        
-        /* Links Section */
+        .subtitle { font-size: 0.85rem; opacity: 0.75; margin-bottom: 25px; letter-spacing: 1px; }
+
         .btn-container { display: flex; flex-direction: column; gap: 12px; margin-bottom: 30px; }
-        
+
         .glass-btn {
             text-decoration: none;
             color: white;
@@ -78,8 +82,7 @@
             border-color: rgba(255, 255, 255, 0.3);
         }
 
-        /* Skills Section */
-        .skills-title { font-size: 0.75rem; text-transform: uppercase; opacity: 0.5; margin-bottom: 15px; letter-spacing: 2px; }
+        .skills-title { font-size: 0.75rem; text-transform: uppercase; opacity: 0.65; margin-bottom: 15px; letter-spacing: 2px; }
         .skills-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
@@ -98,7 +101,6 @@
         .fa-python { color: #ffd43b; }
         .fa-file-excel { color: #1d6f42; }
 
-        /* Contact Section */
         .contact-box {
             background: rgba(0, 0, 0, 0.2);
             padding: 15px;
@@ -107,55 +109,56 @@
             text-align: left;
         }
         .contact-box a { color: #60a5fa; text-decoration: none; display: block; margin-top: 4px; overflow: hidden; text-overflow: ellipsis; }
+        .contact-box a:hover { text-decoration: underline; }
+        .contact-label { opacity: 0.7; font-weight: 600; font-size: 0.7rem; text-transform: uppercase; }
 
-        /* Background Shapes */
         .shape { position: absolute; z-index: -1; border-radius: 50%; filter: blur(60px); opacity: 0.4; }
     </style>
 </head>
 <body>
+    <div class="shape" aria-hidden="true" style="width: 300px; height: 300px; top: 10%; left: 15%; background: #3b82f6;"></div>
+    <div class="shape" aria-hidden="true" style="width: 250px; height: 250px; bottom: 10%; right: 15%; background: #8b5cf6;"></div>
 
-    <div class="shape" style="width: 300px; height: 300px; top: 10%; left: 15%; background: #3b82f6;"></div>
-    <div class="shape" style="width: 250px; height: 250px; bottom: 10%; right: 15%; background: #8b5cf6;"></div>
+    <main>
+        <div class="glass-card">
+            <div class="stamp" aria-hidden="true">
+                <i class="fas fa-heart"></i> I Love Open-Source
+            </div>
 
-    <div class="glass-card">
-        <div class="stamp">
-            <i class="fas fa-heart"></i> I Love Open-Source
+            <h1>Caleb Martins</h1>
+            <p class="subtitle">Statistics @ UFPE</p>
+
+            <nav class="btn-container" aria-label="Main navigation">
+                <a href="https://github.com/Caleshi" class="glass-btn" target="_blank" rel="noopener noreferrer">
+                    <i class="fab fa-github" aria-hidden="true"></i> View GitHub Profile
+                </a>
+                <a href="code.html" class="glass-btn">
+                    <i class="fas fa-code" aria-hidden="true"></i> My Code Projects
+                </a>
+                <a href="articles.html" class="glass-btn">
+                    <i class="fas fa-book" aria-hidden="true"></i> Statistics Articles
+                </a>
+                <a href="https://www.linkedin.com/in/caleb-martins-a1192a257/" class="glass-btn" target="_blank" rel="noopener noreferrer">
+                    <i class="fab fa-linkedin" aria-hidden="true"></i> LinkedIn
+                </a>
+                <a href="https://github.com/Caleshi/Working-in-Excel" class="glass-btn" target="_blank" rel="noopener noreferrer">
+                    <i class="fas fa-file-excel" aria-hidden="true"></i> Excel Projects
+                </a>
+            </nav>
+
+            <p class="skills-title">Core Skills</p>
+            <div class="skills-grid" aria-label="Core skills">
+                <div class="skill-item"><i class="fab fa-r-project" aria-hidden="true"></i>R Stats</div>
+                <div class="skill-item"><i class="fab fa-python" aria-hidden="true"></i>Python</div>
+                <div class="skill-item"><i class="fas fa-table" aria-hidden="true"></i>Analysis</div>
+            </div>
+
+            <div class="contact-box">
+                <p class="contact-label">Get in touch</p>
+                <a href="mailto:caleb.falcao@ufpe.br">caleb.falcao@ufpe.br</a>
+                <a href="mailto:calebmfalcao@gmail.com">calebmfalcao@gmail.com</a>
+            </div>
         </div>
-
-        <h1>Caleb Martins</h1>
-        <p class="subtitle">Statistics @ UFPE</p>
-        
-        <div class="btn-container">
-            <a href="https://github.com/Caleshi" class="glass-btn" target="_blank">
-                <i class="fab fa-github"></i> View GitHub Profile
-            </a>
-            <a href="code.html" class="glass-btn">
-                <i class="fas fa-code"></i> My Code Projects
-            </a>
-            <a href="articles.html" class="glass-btn">
-                <i class="fas fa-book"></i> Statistics Articles
-            </a>
-            <a href="https://www.linkedin.com/in/caleb-martins-a1192a257/" class="glass-btn" target="_blank">
-                <i class="fab fa-linkedin"></i> LinkedIn
-            </a>
-            <a href="https://github.com/Caleshi/Working-in-Excel" class="glass-btn" target="_blank">
-                <i class="fas fa-file-excel"></i> Excel Projects
-            </a>
-        </div>
-
-        <p class="skills-title">Core Skills</p>
-        <div class="skills-grid">
-            <div class="skill-item"><i class="fab fa-r-project"></i>R Stats</div>
-            <div class="skill-item"><i class="fab fa-python"></i>Python</div>
-            <div class="skill-item"><i class="fas fa-table"></i>Analysis</div>
-        </div>
-
-        <div class="contact-box">
-            <p style="opacity: 0.6; font-weight: 600; font-size: 0.7rem; text-transform: uppercase;">Get in touch</p>
-            <a href="mailto:caleb.falcao@ufpe.br">caleb.falcao@ufpe.br</a>
-            <a href="mailto:calebmfalcao@gmail.com">calebmfalcao@gmail.com</a>
-        </div>
-    </div>
-
+    </main>
 </body>
 </html>

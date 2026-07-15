@@ -4,14 +4,19 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Articles | Caleb Martins</title>
+    <meta name="description" content="Statistics articles by Caleb Martins — sampling theory, estimators, and statistical inference.">
+    <meta property="og:type" content="article">
+    <meta property="og:title" content="Articles | Caleb Martins">
+    <meta property="og:description" content="Statistics articles by Caleb Martins — sampling theory, estimators, and statistical inference.">
+    <meta property="og:url" content="https://caleshi.github.io/articles.html">
+    <meta name="theme-color" content="#0f172a">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='18' fill='%230f172a'/><text y='72' x='50' text-anchor='middle' font-size='68' font-family='Segoe UI,system-ui,sans-serif' font-weight='700' fill='%2360a5fa'>C</text></svg>">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    
-    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
     <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
 
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        
+
         body {
             font-family: 'Segoe UI', system-ui, sans-serif;
             background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
@@ -26,13 +31,16 @@
 
         .glass-btn {
             text-decoration: none;
-            color: rgba(255,255,255,0.8);
+            color: rgba(255,255,255,0.85);
             background: rgba(255, 255, 255, 0.05);
             padding: 10px 20px;
             border-radius: 50px;
             border: 1px solid rgba(255, 255, 255, 0.1);
             font-size: 0.9rem;
             transition: 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
         }
 
         .glass-btn:hover { background: rgba(255, 255, 255, 0.15); color: white; }
@@ -49,11 +57,10 @@
 
         h1 { font-size: 2.2rem; margin-bottom: 10px; color: #60a5fa; }
         h2 { margin: 30px 0 15px; color: #93c5fd; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 5px; }
-        
-        .meta { font-size: 0.9rem; opacity: 0.6; margin-bottom: 30px; display: flex; gap: 20px; }
+
+        .meta { font-size: 0.9rem; opacity: 0.7; margin-bottom: 30px; display: flex; gap: 20px; }
         p { margin-bottom: 20px; opacity: 0.9; }
 
-        /* Formula Styling */
         .formula-box {
             background: rgba(0, 0, 0, 0.2);
             padding: 20px;
@@ -68,34 +75,36 @@
 
     <div class="container">
         <nav class="back-nav">
-            <a href="index.html" class="glass-btn"><i class="fas fa-arrow-left"></i> Back to Home</a>
+            <a href="index.html" class="glass-btn"><i class="fas fa-arrow-left" aria-hidden="true"></i> Back to Home</a>
         </nav>
 
-        <article class="article-card">
-            <h1>Inference and Sampling Estimators</h1>
-            <div class="meta">
-                <span><i class="far fa-calendar"></i> Feb 2026</span>
-                <span><i class="far fa-folder"></i> Statistics</span>
-            </div>
+        <main>
+            <article class="article-card">
+                <h1>Inference and Sampling Estimators</h1>
+                <div class="meta">
+                    <span><i class="far fa-calendar" aria-hidden="true"></i> Feb 2026</span>
+                    <span><i class="far fa-folder" aria-hidden="true"></i> Statistics</span>
+                </div>
 
-            <p>In our recent analysis of Pernambuco health data, we focused on population totals. When using a sample \( s \), the **Horvitz-Thompson** estimator for the total is defined as:</p>
+                <p>In our recent analysis of Pernambuco health data, we focused on population totals. When using a sample \( s \), the <strong>Horvitz-Thompson</strong> estimator for the total is defined as:</p>
 
-            <div class="formula-box">
-                \[ \hat{Y}_{HT} = \sum_{i \in s} \frac{y_i}{\pi_i} \]
-            </div>
+                <div class="formula-box">
+                    \[ \hat{Y}_{HT} = \sum_{i \in s} \frac{y_i}{\pi_i} \]
+                </div>
 
-            <h2>Probability Inclusion</h2>
-            <p>For a given element \( i \), we define the first-order inclusion probability as \( \pi_i = P(i \in s) \). This ensures that our estimator is unbiased, satisfying the condition \( E[\hat{Y}_{HT}] = Y \).</p>
+                <h2>Probability Inclusion</h2>
+                <p>For a given element \( i \), we define the first-order inclusion probability as \( \pi_i = P(i \in s) \). This ensures that our estimator is unbiased, satisfying the condition \( E[\hat{Y}_{HT}] = Y \).</p>
 
-            <h2>Variance Estimation</h2>
-            <p>The variance for this estimator can be calculated using the following expression:</p>
+                <h2>Variance Estimation</h2>
+                <p>The variance for this estimator can be calculated using the following expression:</p>
 
-            <div class="formula-box">
-                \[ V(\hat{Y}_{HT}) = \sum_{i=1}^{N} \sum_{j=1}^{N} (\pi_{ij} - \pi_i \pi_j) \frac{y_i}{\pi_i} \frac{y_j}{\pi_j} \]
-            </div>
-            
-            <p>Where \( \pi_{ij} \) represents the second-order inclusion probability.</p>
-        </article>
+                <div class="formula-box">
+                    \[ V(\hat{Y}_{HT}) = \sum_{i=1}^{N} \sum_{j=1}^{N} (\pi_{ij} - \pi_i \pi_j) \frac{y_i}{\pi_i} \frac{y_j}{\pi_j} \]
+                </div>
+
+                <p>Where \( \pi_{ij} \) represents the second-order inclusion probability.</p>
+            </article>
+        </main>
     </div>
 
 </body>
