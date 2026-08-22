@@ -90,11 +90,13 @@
         .stat {
             background: rgba(0, 0, 0, 0.22); border: 1px solid var(--line);
             border-radius: 14px; padding: 14px 16px; text-align: left;
+            display: flex; flex-direction: column; justify-content: space-between;
         }
         .stat .label {
             font-size: 0.68rem; text-transform: uppercase; letter-spacing: 1.2px;
-            color: var(--text-muted); display: flex; align-items: center; gap: 7px;
+            color: var(--text-muted); display: flex; align-items: baseline; gap: 7px;
         }
+        .stat .label .swatch { align-self: center; }
         .stat .value { font-size: 1.25rem; font-weight: 700; margin-top: 6px; }
         .swatch { width: 10px; height: 10px; border-radius: 3px; flex: none; }
 
@@ -145,7 +147,29 @@
         .tooltip .tt-total { border-top: 1px solid var(--line); margin-top: 6px; padding-top: 6px; }
 
         .legend { display: flex; flex-wrap: wrap; gap: 16px; margin-top: 14px; font-size: 0.82rem; color: var(--text-secondary); }
-        .legend span { display: inline-flex; align-items: center; gap: 8px; }
+        .legend > span { display: inline-flex; align-items: center; gap: 8px; }
+        .key-line { width: 16px; height: 0; border-top-width: 2px; border-top-style: solid; flex: none; }
+        .key-band { width: 16px; height: 12px; border-radius: 3px; flex: none; }
+
+        .card-head {
+            display: flex; flex-wrap: wrap; gap: 12px;
+            align-items: center; justify-content: space-between; margin-bottom: 16px;
+        }
+        .card-head .section-title { margin-bottom: 0; }
+
+        .segmented {
+            display: inline-flex; background: rgba(0, 0, 0, 0.25);
+            border: 1px solid var(--line); border-radius: 50px; padding: 3px;
+        }
+        .seg {
+            font: inherit; font-size: 0.8rem; color: var(--text-secondary); cursor: pointer;
+            background: transparent; border: none; border-radius: 50px; padding: 7px 16px; transition: .2s;
+        }
+        .seg:hover { color: var(--text-primary); }
+        .seg.on { background: rgba(96, 165, 250, 0.22); color: #bfdbfe; font-weight: 600; }
+
+        .hint { font-size: 0.78rem; color: var(--text-muted); margin-top: 14px; }
+        .mc-only[hidden], [hidden] { display: none !important; }
 
         /* ---- controls ---- */
         .section-title {
@@ -212,39 +236,31 @@
         <p class="figure" id="heroTotal">R$ 0</p>
         <p class="caption" id="heroCaption"></p>
 
-        <div class="stat-row">
-            <div class="stat">
-                <div class="label"><i class="fas fa-chart-line" aria-hidden="true"></i> Portfolio</div>
-                <div class="value" id="statPortfolio">R$ 0</div>
-            </div>
-            <div class="stat">
-                <div class="label"><span class="swatch" style="background: var(--series-1)"></span> Contributed</div>
-                <div class="value" id="statContrib">R$ 0</div>
-            </div>
-            <div class="stat">
-                <div class="label"><span class="swatch" style="background: var(--series-2)"></span> Investment growth</div>
-                <div class="value" id="statGrowth">R$ 0</div>
-            </div>
-            <div class="stat">
-                <div class="label"><span class="swatch" style="background: var(--series-3)"></span> Cash left over</div>
-                <div class="value" id="statCash">R$ 0</div>
-            </div>
-        </div>
+        <div class="stat-row" id="statRow"></div>
 
         <p class="warning" id="warnBox"><i class="fas fa-triangle-exclamation" aria-hidden="true" style="margin-top:2px"></i><span id="warnText"></span></p>
     </section>
 
     <section class="card" aria-labelledby="chartLabel">
-        <p class="section-title" id="chartLabel">Net worth over time</p>
+        <div class="card-head">
+            <p class="section-title" id="chartLabel">Net worth over time</p>
+            <div class="segmented" role="group" aria-label="Projection model">
+                <button type="button" id="modeFixed" class="seg on" aria-pressed="true">Fixed return</button>
+                <button type="button" id="modeMC" class="seg" aria-pressed="false">Monte Carlo</button>
+            </div>
+        </div>
         <div id="phaseBar" class="phase-bar" aria-hidden="true"></div>
         <div class="chart-wrap" id="chartWrap">
-            <svg id="chart" role="img" aria-labelledby="chartDesc"><title id="chartDesc">Stacked area chart of projected net worth by month, split into contributions, investment growth and leftover cash, with the three earning phases marked.</title></svg>
+            <svg id="chart" role="img" aria-labelledby="chartDesc"><title id="chartDesc">Projected net worth by month, with the three earning phases marked.</title></svg>
             <div class="tooltip" id="tooltip" role="status" aria-live="off"></div>
         </div>
-        <div class="legend">
-            <span><span class="swatch" style="background: var(--series-1)"></span> Contributed</span>
-            <span><span class="swatch" style="background: var(--series-2)"></span> Investment growth</span>
-            <span><span class="swatch" style="background: var(--series-3)"></span> Cash left over</span>
+        <div class="legend" id="legend"></div>
+
+        <div id="distBlock" hidden>
+            <p class="section-title" style="margin-top: 26px">Where the <span id="distDate">December 2029</span> outcome lands</p>
+            <div class="chart-wrap" id="distWrap">
+                <svg id="distChart" role="img" aria-labelledby="distDesc"><title id="distDesc">Histogram of the simulated net worth on the final month.</title></svg>
+            </div>
         </div>
     </section>
 
@@ -284,9 +300,28 @@
                 <label for="inpStartCash">Cash on hand (R$)</label>
                 <input type="number" id="inpStartCash" min="0" step="100">
             </div>
+            <div class="field mc-only">
+                <label for="inpVol">Annual volatility (%)</label>
+                <input type="number" id="inpVol" min="0" max="60" step="1">
+            </div>
+            <div class="field mc-only">
+                <label for="inpRuns">Simulated runs</label>
+                <select id="inpRuns">
+                    <option value="250">250</option>
+                    <option value="1000">1.000</option>
+                    <option value="2500">2.500</option>
+                    <option value="5000">5.000</option>
+                </select>
+            </div>
+            <div class="field mc-only">
+                <label for="inpTarget">Target net worth (R$)</label>
+                <input type="number" id="inpTarget" min="0" step="5000">
+            </div>
         </div>
+        <p class="hint mc-only" id="rateHint">In Monte Carlo mode the annual return is the <em>average</em> return; each month is drawn at random around it.</p>
         <div class="actions">
             <button type="button" class="glass-btn" id="btnTable" aria-expanded="false" aria-controls="tableCard"><i class="fas fa-table" aria-hidden="true"></i> Show year-by-year table</button>
+            <button type="button" class="glass-btn mc-only" id="btnRedraw"><i class="fas fa-dice" aria-hidden="true"></i> New random draw</button>
             <button type="button" class="glass-btn" id="btnReset"><i class="fas fa-rotate-left" aria-hidden="true"></i> Reset to defaults</button>
         </div>
     </section>
@@ -295,14 +330,14 @@
         <p class="section-title" id="tableLabel">Year by year</p>
         <div class="table-scroll">
             <table>
-                <thead><tr><th scope="col">Period</th><th scope="col">Phase</th><th scope="col">Contributed</th><th scope="col">Growth</th><th scope="col">Cash</th><th scope="col">Net worth</th></tr></thead>
+                <thead id="tableHead"></thead>
                 <tbody id="tableBody"></tbody>
             </table>
         </div>
     </section>
 
     <footer>
-        <p>Returns are compounded monthly from the annual rate and applied before each month's contribution. Figures are nominal — they do not account for inflation, taxes or fees.</p>
+        <p id="footNote"></p>
     </footer>
 </div>
 
@@ -321,6 +356,11 @@
             rate: 10,
             startInvested: 0,
             startCash: 0,
+            mode: "fixed",      // "fixed" | "mc"
+            vol: 15,            // annual volatility, % — Monte Carlo only
+            runs: 1000,
+            target: 150000,
+            seed: 20260822,
             phases: [
                 { start: start,                     income: 2500,  expenses: 1500, invest: 800 },
                 { start: addMonths(start, 12),      income: 5000,  expenses: 2500, invest: 2000 },
@@ -393,6 +433,11 @@
         state.rate = clamp(state.rate, 0, 40);
         state.startInvested = Math.max(0, state.startInvested);
         state.startCash = Math.max(0, state.startCash);
+        state.vol = clamp(state.vol, 0, 60);
+        state.runs = clamp(state.runs, 100, 5000);
+        state.target = Math.max(0, Number(state.target) || 0);
+        if (state.mode !== "mc") state.mode = "fixed";
+        for (var k = 0; k < 3; k++) phaseStarts[k] = toIndex(state.phases[k].start);
         state.phases.forEach(function (p) {
             p.income = clamp(p.income, 0, 100000);
             p.expenses = clamp(p.expenses, 0, 100000);
@@ -405,19 +450,30 @@
         return Math.min(hi, Math.max(lo, v));
     }
 
+    var phaseStarts = [0, 0, 0];   // refreshed by normalize(), read on the hot path
     function phaseAt(monthIdx) {
         var p = 0;
-        for (var i = 1; i < 3; i++) if (monthIdx >= toIndex(state.phases[i].start)) p = i;
+        for (var i = 1; i < 3; i++) if (monthIdx >= phaseStarts[i]) p = i;
         return p;
     }
 
-    /* ---------- the simulation ---------- */
-    function simulate() {
+    /* ---------- the simulation ----------
+       One month: the portfolio earns its return, then the month's money moves.
+       `growthFn(t)` returns that month's gross factor — a constant in fixed mode,
+       a random draw in Monte Carlo mode. */
+    function simulate(growthFn, totalsOut) {
         normalize();
+        return runSim(growthFn, totalsOut);
+    }
+
+    // The loop itself, assuming normalize() has already run — Monte Carlo calls
+    // this thousands of times, so it must not redo any setup work.
+    function runSim(growthFn, totalsOut) {
         var startIdx = toIndex(state.start);
         var endIdx = toIndex(state.end);
         var n = endIdx - startIdx + 1;
-        var r = Math.pow(1 + state.rate / 100, 1 / 12) - 1;
+        var fixedFactor = Math.pow(1 + state.rate / 100, 1 / 12);
+        if (!growthFn) growthFn = function () { return fixedFactor; };
 
         var portfolio = state.startInvested;
         var principal = state.startInvested;   // portion of the portfolio that is money put in
@@ -426,14 +482,19 @@
         var shortfall = false;
         var capped = [false, false, false];     // phases that could not invest the full amount
 
-        var points = [{
-            idx: startIdx - 1, principal: principal, growth: 0, cash: cash,
-            total: portfolio + cash, phase: phaseAt(startIdx)
-        }];
+        var points = [];
+        if (totalsOut) {
+            totalsOut[0] = portfolio + cash;
+        } else {
+            points.push({
+                idx: startIdx - 1, principal: principal, growth: 0, cash: cash,
+                total: portfolio + cash, phase: phaseAt(startIdx)
+            });
+        }
 
         for (var t = startIdx; t <= endIdx; t++) {
             var ph = state.phases[phaseAt(t)];
-            portfolio *= 1 + r;
+            portfolio *= growthFn(t);
 
             // You can only invest what the month actually leaves you, plus the cash you hold.
             var invest = Math.max(0, Math.min(ph.invest, ph.income - ph.expenses + cash));
@@ -453,14 +514,18 @@
                 if (cash < -0.5) shortfall = true;
             }
 
-            points.push({
-                idx: t,
-                principal: principal,
-                growth: Math.max(0, portfolio - principal),
-                cash: cash,
-                total: portfolio + cash,
-                phase: phaseAt(t)
-            });
+            if (totalsOut) {
+                totalsOut[t - startIdx + 1] = portfolio + cash;
+            } else {
+                points.push({
+                    idx: t,
+                    principal: principal,
+                    growth: Math.max(0, portfolio - principal),
+                    cash: cash,
+                    total: portfolio + cash,
+                    phase: phaseAt(t)
+                });
+            }
         }
 
         return {
@@ -468,6 +533,110 @@
             portfolio: portfolio, principal: principal, contributed: contributed,
             growth: Math.max(0, portfolio - principal), cash: cash,
             total: portfolio + cash, shortfall: shortfall, capped: capped
+        };
+    }
+
+    /* ---------- Monte Carlo ----------
+       Instead of one fixed return every month, each run draws its own monthly
+       returns. Everything else — income, expenses, contributions — replays
+       unchanged, so the spread you see is return risk and nothing else. */
+
+    // Small seeded PRNG: the same seed always replays the same set of runs,
+    // so the chart only moves when you change an input or ask for a new draw.
+    function mulberry32(seed) {
+        var a = seed >>> 0;
+        return function () {
+            a |= 0; a = (a + 0x6D2B79F5) | 0;
+            var t = Math.imul(a ^ (a >>> 15), 1 | a);
+            t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+            return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+        };
+    }
+    function normals(rand) {
+        var spare = null;
+        return function () {                       // Box-Muller, two draws at a time
+            if (spare !== null) { var v = spare; spare = null; return v; }
+            var u = 1 - rand(), w = rand();
+            var mag = Math.sqrt(-2 * Math.log(u));
+            spare = mag * Math.sin(2 * Math.PI * w);
+            return mag * Math.cos(2 * Math.PI * w);
+        };
+    }
+
+    function quantile(sorted, q) {
+        if (!sorted.length) return 0;
+        var pos = (sorted.length - 1) * q;
+        var lo = Math.floor(pos), hi = Math.ceil(pos);
+        return sorted[lo] + (sorted[hi] - sorted[lo]) * (pos - lo);
+    }
+
+    function monteCarlo() {
+        var det = simulate();                       // the fixed-return path, kept as reference
+        var n = det.months, runs = Math.round(state.runs);
+        var cols = n + 1;
+
+        // Monthly log-returns: sd from the annual volatility, mean set so the
+        // *average* run compounds to exactly the annual return above.
+        var sd = (state.vol / 100) / Math.sqrt(12);
+        var mean = Math.log(1 + state.rate / 100) / 12 - sd * sd / 2;
+
+        var rand = mulberry32(state.seed >>> 0);
+        var gauss = normals(rand);
+        var draw = function () { return Math.exp(mean + sd * gauss()); };
+
+        var flat = new Float64Array(runs * cols);
+        var finals = new Float64Array(runs);
+        var scratch = new Float64Array(runs);
+        var depleted = 0;
+
+        for (var k = 0; k < runs; k++) {
+            var row = flat.subarray(k * cols, (k + 1) * cols);
+            var out = runSim(draw, row);
+            finals[k] = row[cols - 1];
+            if (out.shortfall) depleted++;
+        }
+
+        // Per-month percentiles across all runs.
+        var series = [];
+        for (var j = 0; j < cols; j++) {
+            for (var i = 0; i < runs; i++) scratch[i] = flat[i * cols + j];
+            var col = scratch.slice().sort();      // typed arrays sort numerically
+            var d = det.points[j];
+            series.push({
+                idx: d.idx, phase: d.phase,
+                p10: quantile(col, 0.10), p25: quantile(col, 0.25), p50: quantile(col, 0.50),
+                p75: quantile(col, 0.75), p90: quantile(col, 0.90),
+                det: d.total, moneyIn: d.principal + d.cash
+            });
+        }
+
+        var sortedFinals = finals.slice().sort();
+        var sum = 0;
+        for (var f = 0; f < runs; f++) sum += finals[f];
+        var hits = 0;
+        for (var g = 0; g < runs; g++) if (finals[g] >= state.target) hits++;
+
+        // Histogram of the final month, trimmed at the 1st/99th percentile so a
+        // single lucky run does not flatten the whole thing.
+        var lo = quantile(sortedFinals, 0.01), hi = quantile(sortedFinals, 0.99);
+        if (hi - lo < 1) { lo = sortedFinals[0]; hi = sortedFinals[runs - 1] + 1; }
+        var bins = 28, hist = new Array(bins).fill(0);
+        for (var b = 0; b < runs; b++) {
+            if (finals[b] < lo || finals[b] > hi) continue;    // trimmed tails, or they pile up at the ends
+            var pos = Math.floor(((finals[b] - lo) / (hi - lo)) * bins);
+            hist[Math.min(bins - 1, Math.max(0, pos))]++;
+        }
+
+        return {
+            mode: "mc", det: det, series: series, months: n,
+            startIdx: det.startIdx, endIdx: det.endIdx, runs: runs, capped: det.capped,
+            p10: quantile(sortedFinals, 0.10), p25: quantile(sortedFinals, 0.25),
+            median: quantile(sortedFinals, 0.50), p75: quantile(sortedFinals, 0.75),
+            p90: quantile(sortedFinals, 0.90), mean: sum / runs,
+            worst: sortedFinals[0], best: sortedFinals[runs - 1],
+            moneyIn: det.principal + det.cash,
+            probTarget: hits / runs, depletionRate: depleted / runs,
+            hist: hist, histLo: lo, histHi: hi
         };
     }
 
@@ -490,8 +659,9 @@
         var mag = Math.pow(10, Math.floor(Math.log10(raw)));
         var step = [1, 2, 2.5, 5, 10].map(function (m) { return m * mag; })
             .filter(function (s) { return s >= raw; })[0] || 10 * mag;
+        var top = Math.ceil(max / step) * step;   // the top tick sits above the data, never below it
         var ticks = [];
-        for (var v = 0; v <= max + step * 0.001; v += step) ticks.push(v);
+        for (var v = 0; v <= top + step * 0.001; v += step) ticks.push(v);
         return ticks;
     }
 
@@ -506,16 +676,19 @@
         var H = narrow ? 300 : 380;
         var plotW = W - M.left - M.right;
         var plotH = H - M.top - M.bottom;
-        var pts = sim.points;
+        var mc = sim.mode === "mc";
+        var pts = mc ? sim.series : sim.points;
 
-        var maxTotal = pts.reduce(function (m, p) { return Math.max(m, p.total); }, 0);
+        var maxTotal = pts.reduce(function (m, p) {
+            return mc ? Math.max(m, p.p90, p.det) : Math.max(m, p.total);
+        }, 0);
         var ticks = niceTicks(maxTotal * 1.06);
         var yMax = ticks[ticks.length - 1] || 1;
 
         function X(i) { return M.left + (pts.length === 1 ? 0 : (i / (pts.length - 1)) * plotW); }
         function Y(v) { return M.top + plotH - (v / yMax) * plotH; }
 
-        geom = { W: W, H: H, plotW: plotW, plotH: plotH, X: X, Y: Y, pts: pts };
+        geom = { W: W, H: H, plotW: plotW, plotH: plotH, X: X, Y: Y, pts: pts, mc: mc };
 
         function band(lower, upper) {
             var d = "M " + X(0) + " " + Y(upper(pts[0]));
@@ -529,11 +702,6 @@
             return d;
         }
 
-        var l0 = function () { return 0; };
-        var l1 = function (p) { return p.principal; };
-        var l2 = function (p) { return p.principal + p.growth; };
-        var l3 = function (p) { return p.total; };
-
         var svg = "";
 
         // grid + y axis
@@ -544,14 +712,32 @@
                    esc(moneyAxis(t, narrow)) + "</text>";
         });
 
-        // stacked bands, bottom to top
-        svg += '<path d="' + band(l0, l1) + '" fill="var(--series-1)" fill-opacity="0.85"/>';
-        svg += '<path d="' + band(l1, l2) + '" fill="var(--series-2)" fill-opacity="0.85"/>';
-        svg += '<path d="' + band(l2, l3) + '" fill="var(--series-3)" fill-opacity="0.85"/>';
-        // 2px surface gap between stacked segments
-        svg += '<path d="' + line(l1) + '" fill="none" stroke="#16203a" stroke-width="2"/>';
-        svg += '<path d="' + line(l2) + '" fill="none" stroke="#16203a" stroke-width="2"/>';
-        svg += '<path d="' + line(l3) + '" fill="none" stroke="#f8fafc" stroke-width="2" stroke-opacity="0.9"/>';
+        if (mc) {
+            // fan chart: the wider the band, the less likely the outcome
+            svg += '<path d="' + band(function (p) { return p.p10; }, function (p) { return p.p90; }) +
+                   '" fill="var(--series-1)" fill-opacity="0.20"/>';
+            svg += '<path d="' + band(function (p) { return p.p25; }, function (p) { return p.p75; }) +
+                   '" fill="var(--series-1)" fill-opacity="0.38"/>';
+            svg += '<path d="' + line(function (p) { return p.moneyIn; }) +
+                   '" fill="none" stroke="var(--series-3)" stroke-width="2" stroke-dasharray="5 4"/>';
+            svg += '<path d="' + line(function (p) { return p.det; }) +
+                   '" fill="none" stroke="var(--series-2)" stroke-width="2" stroke-dasharray="7 4"/>';
+            svg += '<path d="' + line(function (p) { return p.p50; }) +
+                   '" fill="none" stroke="#f8fafc" stroke-width="2"/>';
+        } else {
+            var l0 = function () { return 0; };
+            var l1 = function (p) { return p.principal; };
+            var l2 = function (p) { return p.principal + p.growth; };
+            var l3 = function (p) { return p.total; };
+            // stacked bands, bottom to top
+            svg += '<path d="' + band(l0, l1) + '" fill="var(--series-1)" fill-opacity="0.85"/>';
+            svg += '<path d="' + band(l1, l2) + '" fill="var(--series-2)" fill-opacity="0.85"/>';
+            svg += '<path d="' + band(l2, l3) + '" fill="var(--series-3)" fill-opacity="0.85"/>';
+            // 2px surface gap between stacked segments
+            svg += '<path d="' + line(l1) + '" fill="none" stroke="#16203a" stroke-width="2"/>';
+            svg += '<path d="' + line(l2) + '" fill="none" stroke="#16203a" stroke-width="2"/>';
+            svg += '<path d="' + line(l3) + '" fill="none" stroke="#f8fafc" stroke-width="2" stroke-opacity="0.9"/>';
+        }
 
         // phase dividers, mirroring the sketch's vertical annotation lines
         var lastDividerX = null;
@@ -605,12 +791,13 @@
                    '" font-size="11" fill="#94a3b8">' + esc(l.text) + "</text>";
         });
 
-        // direct label on the final total
+        // direct label on the final total (the median outcome in Monte Carlo mode)
         var last = pts[pts.length - 1];
-        var ly = Math.max(M.top + (narrow ? 12 : 44), Y(last.total) - 12);
+        var lastValue = mc ? last.p50 : last.total;
+        var ly = Math.max(M.top + (narrow ? 12 : 44), Y(lastValue) - 12);
         svg += '<text x="' + (W - M.right) + '" y="' + ly + '" text-anchor="end" font-size="13" font-weight="700"' +
                ' fill="#f8fafc" stroke="#16203a" stroke-width="4" paint-order="stroke" stroke-linejoin="round">' +
-               esc(money(last.total)) + "</text>";
+               esc(money(lastValue)) + "</text>";
 
         // hover layer
         svg += '<line id="crosshair" y1="' + M.top + '" y2="' + (M.top + plotH) +
@@ -641,19 +828,29 @@
             var i = Math.round(ratio * (geom.pts.length - 1));
             i = Math.min(geom.pts.length - 1, Math.max(0, i));
             var p = geom.pts[i];
-            var x = geom.X(i), y = geom.Y(p.total);
+            var headline = geom.mc ? p.p50 : p.total;
+            var x = geom.X(i), y = geom.Y(headline);
 
             cross.setAttribute("x1", x); cross.setAttribute("x2", x);
             cross.style.display = "";
             dot.setAttribute("cx", x); dot.setAttribute("cy", y);
             dot.style.display = "";
 
+            var body = geom.mc
+                ? row("var(--series-1)", "Top 10% above", p.p90) +
+                  row("var(--series-1)", "Upper quartile", p.p75) +
+                  row("var(--series-1)", "Lower quartile", p.p25) +
+                  row("var(--series-1)", "Bottom 10% below", p.p10) +
+                  row("var(--series-2)", "Fixed return", p.det) +
+                  row("var(--series-3)", "Money put in", p.moneyIn) +
+                  '<div class="tt-row tt-total"><span>Median</span><b>' + esc(money(p.p50)) + "</b></div>"
+                : row("var(--series-1)", "Contributed", p.principal) +
+                  row("var(--series-2)", "Growth", p.growth) +
+                  row("var(--series-3)", "Cash", p.cash) +
+                  '<div class="tt-row tt-total"><span>Net worth</span><b>' + esc(money(p.total)) + "</b></div>";
+
             tipEl.innerHTML =
-                '<div class="tt-title">' + esc(labelLong(p.idx)) + " &middot; Phase " + (p.phase + 1) + "</div>" +
-                row("var(--series-1)", "Contributed", p.principal) +
-                row("var(--series-2)", "Growth", p.growth) +
-                row("var(--series-3)", "Cash", p.cash) +
-                '<div class="tt-row tt-total"><span>Net worth</span><b>' + esc(money(p.total)) + "</b></div>";
+                '<div class="tt-title">' + esc(labelLong(p.idx)) + " &middot; Phase " + (p.phase + 1) + "</div>" + body;
             tipEl.classList.add("show");
 
             var left = x / scale + 14;
@@ -722,7 +919,7 @@
                 var el = document.getElementById("p" + i + key);
                 el.addEventListener("input", function () {
                     state.phases[i][key] = Number(el.value);
-                    render();
+                    scheduleRender();
                 });
             });
         });
@@ -740,6 +937,19 @@
         document.getElementById("inpRate").value = state.rate;
         document.getElementById("inpStartInv").value = state.startInvested;
         document.getElementById("inpStartCash").value = state.startCash;
+        document.getElementById("inpVol").value = state.vol;
+        document.getElementById("inpRuns").value = String(state.runs);
+        document.getElementById("inpTarget").value = state.target;
+
+        var mc = state.mode === "mc";
+        document.getElementById("modeFixed").classList.toggle("on", !mc);
+        document.getElementById("modeMC").classList.toggle("on", mc);
+        document.getElementById("modeFixed").setAttribute("aria-pressed", String(!mc));
+        document.getElementById("modeMC").setAttribute("aria-pressed", String(mc));
+        [].forEach.call(document.querySelectorAll(".mc-only"), function (el) {
+            if (mc) el.removeAttribute("hidden"); else el.setAttribute("hidden", "");
+        });
+        document.querySelector('label[for="inpRate"]').textContent = mc ? "Average annual return (%)" : "Annual return (%)";
 
         state.phases.forEach(function (p, i) {
             ["income", "expenses", "invest"].forEach(function (key) {
@@ -778,9 +988,24 @@
         bindMonth("inpP3", function (v) { state.phases[2].start = v; });
         bindMonth("inpEnd", function (v) { state.end = v; });
 
-        [["inpRate", "rate"], ["inpStartInv", "startInvested"], ["inpStartCash", "startCash"]].forEach(function (pair) {
+        [["inpRate", "rate"], ["inpStartInv", "startInvested"], ["inpStartCash", "startCash"],
+         ["inpVol", "vol"], ["inpTarget", "target"], ["inpRuns", "runs"]].forEach(function (pair) {
             var el = document.getElementById(pair[0]);
-            el.addEventListener("input", function () { state[pair[1]] = Number(el.value); render(); });
+            el.addEventListener("input", function () { state[pair[1]] = Number(el.value); scheduleRender(); });
+            el.addEventListener("change", function () { state[pair[1]] = Number(el.value); render(); });
+        });
+
+        function setMode(mode) {
+            if (state.mode === mode) return;
+            state.mode = mode;
+            render();
+        }
+        document.getElementById("modeFixed").addEventListener("click", function () { setMode("fixed"); });
+        document.getElementById("modeMC").addEventListener("click", function () { setMode("mc"); });
+
+        document.getElementById("btnRedraw").addEventListener("click", function () {
+            state.seed = (Math.random() * 4294967295) >>> 0;
+            render();
         });
 
         document.getElementById("btnReset").addEventListener("click", function () {
@@ -800,53 +1025,185 @@
         });
     }
 
+    /* ---------- ending-distribution histogram (Monte Carlo only) ---------- */
+    function drawDist(sim) {
+        var block = document.getElementById("distBlock");
+        if (sim.mode !== "mc") { block.setAttribute("hidden", ""); return; }
+        block.removeAttribute("hidden");
+        document.getElementById("distDate").textContent = labelLong(sim.endIdx);
+
+        var svgEl = document.getElementById("distChart");
+        var W = Math.max(320, document.getElementById("distWrap").clientWidth || 900);
+        var narrow = W < 560;
+        var m = { top: 14, right: narrow ? 12 : 18, bottom: 34, left: narrow ? 50 : 68 };
+        var H = narrow ? 170 : 200;
+        var plotW = W - m.left - m.right, plotH = H - m.top - m.bottom;
+
+        var bins = sim.hist.length;
+        var peak = sim.hist.reduce(function (a, b) { return Math.max(a, b); }, 1);
+        var span = sim.histHi - sim.histLo;
+        var svg = "";
+
+        function xAt(v) { return m.left + ((v - sim.histLo) / span) * plotW; }
+
+        // bars, coloured by which side of the target they fall on
+        for (var i = 0; i < bins; i++) {
+            var v0 = sim.histLo + (i / bins) * span;
+            var w = plotW / bins;
+            var h = (sim.hist[i] / peak) * plotH;
+            var mid = v0 + span / (bins * 2);
+            var hit = mid >= state.target;
+            svg += '<rect x="' + (m.left + i * w + 1) + '" y="' + (m.top + plotH - h) +
+                   '" width="' + Math.max(1, w - 2) + '" height="' + h + '" rx="2" fill="var(--series-1)" fill-opacity="' +
+                   (hit ? "0.85" : "0.30") + '"/>';
+        }
+
+        svg += '<line x1="' + m.left + '" x2="' + (W - m.right) + '" y1="' + (m.top + plotH) + '" y2="' + (m.top + plotH) +
+               '" stroke="rgba(255,255,255,0.2)"/>';
+
+        // markers: median, and the target line
+        function marker(value, color, label, above) {
+            if (value < sim.histLo || value > sim.histHi) return "";
+            var x = xAt(value);
+            var anchor = x > W - 90 ? "end" : (x < m.left + 60 ? "start" : "middle");
+            var ty = above ? m.top + 11 : m.top + plotH - 8;   // median on top, target on the baseline
+            return '<line x1="' + x + '" x2="' + x + '" y1="' + m.top + '" y2="' + (m.top + plotH) +
+                   '" stroke="' + color + '" stroke-width="2" stroke-dasharray="' + (above ? "0" : "6 4") + '"/>' +
+                   '<text x="' + x + '" y="' + ty + '" text-anchor="' + anchor +
+                   '" font-size="11" font-weight="700" fill="' + color +
+                   '" stroke="#16203a" stroke-width="4" paint-order="stroke" stroke-linejoin="round">' + esc(label) + "</text>";
+        }
+        svg += marker(sim.median, "#f8fafc", narrow ? "Median" : "Median " + money(sim.median), true);
+        if (state.target > 0) {
+            svg += marker(state.target, "#eab308", narrow ? "Target" : "Target " + money(state.target), false);
+        }
+
+        // x scale: a few value ticks across the trimmed range
+        var steps = narrow ? 2 : 4;
+        for (var t = 0; t <= steps; t++) {
+            var v = sim.histLo + (t / steps) * span;
+            var x = xAt(v);
+            var anch = t === 0 ? "start" : (t === steps ? "end" : "middle");
+            svg += '<text x="' + x + '" y="' + (m.top + plotH + 20) + '" text-anchor="' + anch +
+                   '" font-size="11" fill="#94a3b8">' + esc(moneyAxis(v, narrow)) + "</text>";
+        }
+        svg += '<text x="' + (m.left - 8) + '" y="' + (m.top + 10) + '" text-anchor="end" font-size="11" fill="#94a3b8">runs</text>';
+
+        svgEl.setAttribute("viewBox", "0 0 " + W + " " + H);
+        svgEl.setAttribute("width", W);
+        svgEl.setAttribute("height", H);
+        svgEl.innerHTML = '<title id="distDesc">Histogram of the simulated net worth on the final month, with the median and the target marked.</title>' + svg;
+    }
+
+    /* ---------- legend ---------- */
+    function drawLegend(sim) {
+        var host = document.getElementById("legend");
+        function sw(color, label) { return '<span><span class="swatch" style="background:' + color + '"></span>' + label + "</span>"; }
+        function bandKey(color, opacity, label) {
+            return '<span><span class="key-band" style="background:' + color + ';opacity:' + opacity + '"></span>' + label + "</span>";
+        }
+        function lineKey(color, dashed, label) {
+            return '<span><span class="key-line" style="border-top-color:' + color +
+                   (dashed ? ";border-top-style:dashed" : "") + '"></span>' + label + "</span>";
+        }
+        host.innerHTML = sim.mode === "mc"
+            ? lineKey("#f8fafc", false, "Median outcome") +
+              bandKey("var(--series-1)", 0.55, "Middle 50% of runs") +
+              bandKey("var(--series-1)", 0.28, "80% of runs") +
+              lineKey("var(--series-2)", true, "Fixed-return projection") +
+              lineKey("var(--series-3)", true, "Money you put in")
+            : sw("var(--series-1)", "Contributed") + sw("var(--series-2)", "Investment growth") + sw("var(--series-3)", "Cash left over");
+    }
+
     /* ---------- summary + table ---------- */
+    function stat(label, value, swatch) {
+        return '<div class="stat"><div class="label">' + swatch + " " + label + '</div><div class="value">' + esc(value) + "</div></div>";
+    }
+    function dot(color) { return '<span class="swatch" style="background:' + color + '"></span>'; }
+    function icon(name) { return '<i class="fas fa-' + name + '" aria-hidden="true"></i>'; }
+    function pct(x) { return (x * 100).toFixed(x > 0.995 || x < 0.005 ? 1 : 0).replace(".", ",") + "%"; }
+
     function drawSummary(sim) {
-        document.getElementById("heroDate").textContent = labelLong(sim.endIdx);
-        document.getElementById("heroTotal").textContent = money(sim.total);
-        document.getElementById("heroCaption").textContent =
-            sim.months + " months from " + labelLong(sim.startIdx) + " · " +
-            money(sim.contributed) + " invested along the way · " + state.rate + "% a year";
+        var mc = sim.mode === "mc";
+        var det = mc ? sim.det : sim;
 
-        document.getElementById("statPortfolio").textContent = money(sim.portfolio);
-        document.getElementById("statContrib").textContent = money(sim.principal);
-        document.getElementById("statGrowth").textContent = money(sim.growth);
-        document.getElementById("statCash").textContent = money(sim.cash);
+        document.getElementById("heroLabel").innerHTML =
+            (mc ? "Median net worth on " : "Projected net worth on ") + esc(labelLong(sim.endIdx));
+        document.getElementById("heroTotal").textContent = money(mc ? sim.median : sim.total);
+        document.getElementById("heroCaption").textContent = mc
+            ? sim.runs.toLocaleString("pt-BR") + " simulated runs · half land between " +
+              money(sim.p25) + " and " + money(sim.p75) + " · 80% between " + money(sim.p10) + " and " + money(sim.p90)
+            : sim.months + " months from " + labelLong(sim.startIdx) + " · " +
+              money(sim.contributed) + " invested along the way · " + state.rate + "% a year";
 
-        var warn = document.getElementById("warnBox");
+        document.getElementById("statRow").innerHTML = mc
+            ? stat("Chance of hitting " + money(state.target), pct(sim.probTarget), icon("bullseye")) +
+              stat("Unlucky (10th pct)", money(sim.p10), dot("var(--series-1)")) +
+              stat("Lucky (90th pct)", money(sim.p90), dot("var(--series-1)")) +
+              stat("Money you put in", money(sim.moneyIn), dot("var(--series-3)"))
+            : stat("Portfolio", money(sim.portfolio), icon("chart-line")) +
+              stat("Contributed", money(sim.principal), dot("var(--series-1)")) +
+              stat("Investment growth", money(sim.growth), dot("var(--series-2)")) +
+              stat("Cash left over", money(sim.cash), dot("var(--series-3)"));
+
         var msgs = [];
-        sim.capped.forEach(function (isCapped, i) {
-            if (isCapped) {
-                msgs.push("Phase " + (i + 1) + " asks to invest more than it has available, so some months invest only what is left after expenses.");
-            }
-        });
-        if (sim.shortfall) msgs.push("The plan runs out of money: expenses outlast both the cash and the portfolio.");
+        var short = [];
+        det.capped.forEach(function (isCapped, i) { if (isCapped) short.push(i + 1); });
+        if (short.length) {
+            msgs.push((short.length > 1 ? "Phases " : "Phase ") +
+                short.join(" and ") + " ask" + (short.length > 1 ? "" : "s") +
+                " to invest more than they have available, so those months invest only what is left after expenses.");
+        }
+        if (mc && sim.depletionRate > 0) {
+            msgs.push(pct(sim.depletionRate) + " of runs ran out of money before " + labelLong(sim.endIdx) + ".");
+        } else if (!mc && sim.shortfall) {
+            msgs.push("The plan runs out of money: expenses outlast both the cash and the portfolio.");
+        }
         document.getElementById("warnText").textContent = msgs.join(" ");
-        warn.classList.toggle("show", msgs.length > 0);
+        document.getElementById("warnBox").classList.toggle("show", msgs.length > 0);
+
+        document.getElementById("footNote").textContent = mc
+            ? "Each run draws every month's return at random from a lognormal distribution set by the average return and volatility above, then replays the same income, expenses and contributions. The average of all runs matches the fixed-return line; the median sits below it, because a bad year costs more than an equally good year gives back. The same seed replays the same runs — use \u201CNew random draw\u201D for a fresh set. Figures are nominal — no inflation, taxes or fees."
+            : "Returns are compounded monthly from the annual rate and applied before each month's contribution. Figures are nominal — they do not account for inflation, taxes or fees.";
     }
 
     function drawTable(sim) {
-        var rows = sim.points.filter(function (p, i) {
-            return i > 0 && (p.idx % 12 === 11 || i === sim.points.length - 1);
+        var mc = sim.mode === "mc";
+        var rows = (mc ? sim.series : sim.points).filter(function (p, i) {
+            return i > 0 && (p.idx % 12 === 11 || i === (mc ? sim.series : sim.points).length - 1);
         });
+        document.getElementById("tableHead").innerHTML = mc
+            ? "<tr><th scope=\"col\">Period</th><th scope=\"col\">Phase</th><th scope=\"col\">Money in</th><th scope=\"col\">10th pct</th><th scope=\"col\">Median</th><th scope=\"col\">90th pct</th><th scope=\"col\">Fixed return</th></tr>"
+            : "<tr><th scope=\"col\">Period</th><th scope=\"col\">Phase</th><th scope=\"col\">Contributed</th><th scope=\"col\">Growth</th><th scope=\"col\">Cash</th><th scope=\"col\">Net worth</th></tr>";
         document.getElementById("tableBody").innerHTML = rows.map(function (p) {
+            var cells = mc
+                ? [money(p.moneyIn), money(p.p10), "<b>" + money(p.p50) + "</b>", money(p.p90), money(p.det)]
+                : [money(p.principal), money(p.growth), money(p.cash), "<b>" + money(p.total) + "</b>"];
             return "<tr><td>" + esc(labelShort(p.idx)) + "</td><td>" + (p.phase + 1) + "</td><td>" +
-                esc(money(p.principal)) + "</td><td>" + esc(money(p.growth)) + "</td><td>" +
-                esc(money(p.cash)) + "</td><td><b>" + esc(money(p.total)) + "</b></td></tr>";
+                cells.join("</td><td>") + "</td></tr>";
         }).join("");
     }
 
     /* ---------- render ---------- */
     var lastSim = null;
+    var frame = null;
     function render() {
-        var sim = simulate();
+        normalize();
+        var sim = state.mode === "mc" ? monteCarlo() : simulate();
         lastSim = sim;
         drawSummary(sim);
+        drawLegend(sim);
         drawPhaseBar(sim);
         drawChart(sim);
+        drawDist(sim);
         drawTable(sim);
         syncControls(sim);
         save();
+    }
+    // Monte Carlo re-runs thousands of paths, so coalesce bursts of slider input.
+    function scheduleRender() {
+        if (frame) return;
+        frame = requestAnimationFrame(function () { frame = null; render(); });
     }
 
     buildPhaseControls();
@@ -856,7 +1213,9 @@
     var resizeTimer;
     window.addEventListener("resize", function () {
         clearTimeout(resizeTimer);
-        resizeTimer = setTimeout(function () { if (lastSim) { drawPhaseBar(lastSim); drawChart(lastSim); } }, 120);
+        resizeTimer = setTimeout(function () {
+            if (lastSim) { drawPhaseBar(lastSim); drawChart(lastSim); drawDist(lastSim); }
+        }, 120);
     });
 })();
 </script>
