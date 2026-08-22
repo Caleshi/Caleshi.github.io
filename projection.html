@@ -1,0 +1,864 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Phase Projection | Caleb Martins</title>
+    <meta name="description" content="Interactive three-phase financial projection: adjust income, expenses and monthly investment per phase and see the projected net worth by December 2029.">
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Phase Projection | Caleb Martins">
+    <meta property="og:description" content="Interactive three-phase financial projection through December 2029.">
+    <meta property="og:url" content="https://caleshi.github.io/projection.html">
+    <meta name="theme-color" content="#0f172a">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='18' fill='%230f172a'/><text y='72' x='50' text-anchor='middle' font-size='68' font-family='Segoe UI,system-ui,sans-serif' font-weight='700' fill='%2360a5fa'>C</text></svg>">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --surface-0: #0f172a;
+            --surface-1: #16203a;
+            --line: rgba(255, 255, 255, 0.10);
+            --text-primary: #f8fafc;
+            --text-secondary: #cbd5e1;
+            --text-muted: #94a3b8;
+            /* categorical slots 1-3, dark steps */
+            --series-1: #3987e5;  /* contributions */
+            --series-2: #d95926;  /* growth */
+            --series-3: #199e70;  /* cash */
+            --warn: #e66767;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            color: var(--text-primary);
+            min-height: 100vh;
+            padding: 40px 20px 60px;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .container { max-width: 1040px; margin: 0 auto; }
+        .back-nav { margin-bottom: 30px; }
+
+        .glass-btn {
+            text-decoration: none;
+            color: white;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 10px 20px;
+            border-radius: 50px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font: inherit;
+            cursor: pointer;
+        }
+        .glass-btn:hover { background: rgba(255, 255, 255, 0.15); }
+
+        .header-section { margin-bottom: 34px; text-align: center; }
+        .header-section h1 { font-size: 2.4rem; color: #60a5fa; margin-bottom: 8px; }
+        .header-section p { color: var(--text-secondary); font-size: 1.05rem; }
+
+        .card {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid var(--line);
+            border-radius: 20px;
+            padding: 26px;
+            margin-bottom: 24px;
+        }
+
+        /* ---- hero result ---- */
+        .hero { text-align: center; }
+        .hero .eyebrow {
+            font-size: 0.72rem; text-transform: uppercase; letter-spacing: 2px;
+            color: var(--text-muted); margin-bottom: 10px;
+        }
+        .hero .figure {
+            font-size: clamp(2.2rem, 7vw, 3.6rem); font-weight: 700; line-height: 1.05;
+            letter-spacing: -1px;
+        }
+        .hero .caption { color: var(--text-secondary); font-size: 0.9rem; margin-top: 8px; }
+
+        .stat-row {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 12px; margin-top: 24px;
+        }
+        .stat {
+            background: rgba(0, 0, 0, 0.22); border: 1px solid var(--line);
+            border-radius: 14px; padding: 14px 16px; text-align: left;
+        }
+        .stat .label {
+            font-size: 0.68rem; text-transform: uppercase; letter-spacing: 1.2px;
+            color: var(--text-muted); display: flex; align-items: center; gap: 7px;
+        }
+        .stat .value { font-size: 1.25rem; font-weight: 700; margin-top: 6px; }
+        .swatch { width: 10px; height: 10px; border-radius: 3px; flex: none; }
+
+        .warning {
+            margin-top: 18px; display: none; gap: 10px; align-items: flex-start;
+            background: rgba(230, 103, 103, 0.12); border: 1px solid rgba(230, 103, 103, 0.4);
+            color: #fecaca; border-radius: 12px; padding: 12px 14px; font-size: 0.85rem;
+            text-align: left;
+        }
+        .warning.show { display: flex; }
+
+        /* ---- phase bar + chart ---- */
+        .phase-bar {
+            display: flex; border: 1px solid rgba(255, 255, 255, 0.35);
+            border-radius: 8px; overflow: hidden; height: 46px; margin-bottom: 6px;
+        }
+        .phase-seg {
+            flex: none; display: flex; flex-direction: column; justify-content: center;
+            padding: 0 12px; border-right: 1px solid rgba(255, 255, 255, 0.35);
+            overflow: hidden; white-space: nowrap;
+        }
+        .phase-seg:last-child { border-right: none; }
+        .phase-seg .name {
+            font-size: 0.72rem; font-weight: 800; letter-spacing: 1.6px; text-transform: uppercase;
+        }
+        .phase-seg .meta { font-size: 0.7rem; color: var(--text-muted); margin-top: 2px; }
+
+        .chart-wrap { position: relative; }
+        .chart-wrap svg { display: block; width: 100%; height: auto; touch-action: pan-y; }
+
+        .tooltip {
+            position: absolute; pointer-events: none; opacity: 0; transition: opacity .12s;
+            background: rgba(8, 14, 30, 0.96); border: 1px solid var(--line);
+            border-radius: 12px; padding: 10px 12px; font-size: 0.8rem; min-width: 178px;
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.5); z-index: 5;
+        }
+        .tooltip.show { opacity: 1; }
+        .tooltip .tt-title {
+            font-weight: 700; margin-bottom: 8px; font-size: 0.75rem;
+            text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted);
+        }
+        .tooltip .tt-row {
+            display: flex; align-items: center; gap: 8px; margin-bottom: 4px;
+            justify-content: space-between;
+        }
+        .tooltip .tt-row span:first-child { display: flex; align-items: center; gap: 7px; color: var(--text-secondary); }
+        .tooltip .tt-row b { font-variant-numeric: tabular-nums; }
+        .tooltip .tt-total { border-top: 1px solid var(--line); margin-top: 6px; padding-top: 6px; }
+
+        .legend { display: flex; flex-wrap: wrap; gap: 16px; margin-top: 14px; font-size: 0.82rem; color: var(--text-secondary); }
+        .legend span { display: inline-flex; align-items: center; gap: 8px; }
+
+        /* ---- controls ---- */
+        .section-title {
+            font-size: 0.75rem; text-transform: uppercase; letter-spacing: 2px;
+            color: var(--text-muted); margin-bottom: 16px;
+        }
+        .phase-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; }
+
+        .phase-card {
+            background: rgba(0, 0, 0, 0.2); border: 1px solid var(--line);
+            border-radius: 16px; padding: 20px; border-top: 3px solid var(--accent, #60a5fa);
+        }
+        .phase-card h3 { font-size: 0.95rem; letter-spacing: 1.4px; text-transform: uppercase; }
+        .phase-card .range { font-size: 0.76rem; color: var(--text-muted); margin: 4px 0 16px; }
+
+        .field { margin-bottom: 14px; }
+        .field label {
+            display: flex; justify-content: space-between; align-items: baseline;
+            font-size: 0.78rem; color: var(--text-secondary); margin-bottom: 6px;
+        }
+        .field label b { font-size: 0.9rem; color: var(--text-primary); font-variant-numeric: tabular-nums; }
+
+        input[type="range"] { width: 100%; accent-color: #60a5fa; height: 22px; cursor: pointer; }
+        input[type="month"], input[type="number"], select {
+            width: 100%; background: rgba(255, 255, 255, 0.06); color: var(--text-primary);
+            border: 1px solid var(--line); border-radius: 10px; padding: 9px 11px;
+            font: inherit; font-size: 0.88rem;
+        }
+        input[type="month"]::-webkit-calendar-picker-indicator { filter: invert(1); opacity: .6; cursor: pointer; }
+        input:focus-visible, select:focus-visible, button:focus-visible, a:focus-visible {
+            outline: 2px solid #60a5fa; outline-offset: 2px;
+        }
+
+        .leftover { font-size: 0.76rem; color: var(--text-muted); margin-top: 12px; }
+        .leftover b { color: var(--series-3); }
+        .leftover.negative b { color: var(--warn); }
+
+        .settings-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; }
+        .settings-grid .field { margin-bottom: 0; }
+
+        .actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 20px; }
+
+        table { width: 100%; border-collapse: collapse; font-size: 0.85rem; font-variant-numeric: tabular-nums; }
+        th, td { padding: 9px 10px; text-align: right; border-bottom: 1px solid var(--line); }
+        th:first-child, td:first-child { text-align: left; }
+        th { color: var(--text-muted); font-size: 0.7rem; text-transform: uppercase; letter-spacing: 1px; font-weight: 600; }
+        .table-scroll { overflow-x: auto; }
+        #tableCard[hidden] { display: none; }
+
+        footer { text-align: center; color: var(--text-muted); font-size: 0.78rem; margin-top: 30px; line-height: 1.6; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <nav class="back-nav"><a href="index.html" class="glass-btn"><i class="fas fa-arrow-left" aria-hidden="true"></i> Back to Home</a></nav>
+
+    <header class="header-section">
+        <h1>Three-Phase Projection</h1>
+        <p>Earn, spend, invest — phase by phase, month by month.</p>
+    </header>
+
+    <section class="card hero" aria-labelledby="heroLabel">
+        <p class="eyebrow" id="heroLabel">Projected net worth on <span id="heroDate">December 2029</span></p>
+        <p class="figure" id="heroTotal">R$ 0</p>
+        <p class="caption" id="heroCaption"></p>
+
+        <div class="stat-row">
+            <div class="stat">
+                <div class="label"><i class="fas fa-chart-line" aria-hidden="true"></i> Portfolio</div>
+                <div class="value" id="statPortfolio">R$ 0</div>
+            </div>
+            <div class="stat">
+                <div class="label"><span class="swatch" style="background: var(--series-1)"></span> Contributed</div>
+                <div class="value" id="statContrib">R$ 0</div>
+            </div>
+            <div class="stat">
+                <div class="label"><span class="swatch" style="background: var(--series-2)"></span> Investment growth</div>
+                <div class="value" id="statGrowth">R$ 0</div>
+            </div>
+            <div class="stat">
+                <div class="label"><span class="swatch" style="background: var(--series-3)"></span> Cash left over</div>
+                <div class="value" id="statCash">R$ 0</div>
+            </div>
+        </div>
+
+        <p class="warning" id="warnBox"><i class="fas fa-triangle-exclamation" aria-hidden="true" style="margin-top:2px"></i><span id="warnText"></span></p>
+    </section>
+
+    <section class="card" aria-labelledby="chartLabel">
+        <p class="section-title" id="chartLabel">Net worth over time</p>
+        <div id="phaseBar" class="phase-bar" aria-hidden="true"></div>
+        <div class="chart-wrap" id="chartWrap">
+            <svg id="chart" role="img" aria-labelledby="chartDesc"><title id="chartDesc">Stacked area chart of projected net worth by month, split into contributions, investment growth and leftover cash, with the three earning phases marked.</title></svg>
+            <div class="tooltip" id="tooltip" role="status" aria-live="off"></div>
+        </div>
+        <div class="legend">
+            <span><span class="swatch" style="background: var(--series-1)"></span> Contributed</span>
+            <span><span class="swatch" style="background: var(--series-2)"></span> Investment growth</span>
+            <span><span class="swatch" style="background: var(--series-3)"></span> Cash left over</span>
+        </div>
+    </section>
+
+    <section class="card" aria-labelledby="phasesLabel">
+        <p class="section-title" id="phasesLabel">Adjust the phases</p>
+        <div class="phase-grid" id="phaseControls"></div>
+    </section>
+
+    <section class="card" aria-labelledby="settingsLabel">
+        <p class="section-title" id="settingsLabel">Timeline &amp; assumptions</p>
+        <div class="settings-grid">
+            <div class="field">
+                <label for="inpStart">Start</label>
+                <input type="month" id="inpStart">
+            </div>
+            <div class="field">
+                <label for="inpP2">Phase 2 starts</label>
+                <input type="month" id="inpP2">
+            </div>
+            <div class="field">
+                <label for="inpP3">Phase 3 starts</label>
+                <input type="month" id="inpP3">
+            </div>
+            <div class="field">
+                <label for="inpEnd">Projection ends</label>
+                <input type="month" id="inpEnd">
+            </div>
+            <div class="field">
+                <label for="inpRate">Annual return (%)</label>
+                <input type="number" id="inpRate" min="0" max="40" step="0.5">
+            </div>
+            <div class="field">
+                <label for="inpStartInv">Already invested (R$)</label>
+                <input type="number" id="inpStartInv" min="0" step="100">
+            </div>
+            <div class="field">
+                <label for="inpStartCash">Cash on hand (R$)</label>
+                <input type="number" id="inpStartCash" min="0" step="100">
+            </div>
+        </div>
+        <div class="actions">
+            <button type="button" class="glass-btn" id="btnTable" aria-expanded="false" aria-controls="tableCard"><i class="fas fa-table" aria-hidden="true"></i> Show year-by-year table</button>
+            <button type="button" class="glass-btn" id="btnReset"><i class="fas fa-rotate-left" aria-hidden="true"></i> Reset to defaults</button>
+        </div>
+    </section>
+
+    <section class="card" id="tableCard" hidden aria-labelledby="tableLabel">
+        <p class="section-title" id="tableLabel">Year by year</p>
+        <div class="table-scroll">
+            <table>
+                <thead><tr><th scope="col">Period</th><th scope="col">Phase</th><th scope="col">Contributed</th><th scope="col">Growth</th><th scope="col">Cash</th><th scope="col">Net worth</th></tr></thead>
+                <tbody id="tableBody"></tbody>
+            </table>
+        </div>
+    </section>
+
+    <footer>
+        <p>Returns are compounded monthly from the annual rate and applied before each month's contribution. Figures are nominal — they do not account for inflation, taxes or fees.</p>
+    </footer>
+</div>
+
+<script>
+(function () {
+    "use strict";
+
+    var PHASE_COLORS = ["#60a5fa", "#a78bfa", "#f472b6"];
+
+    function defaults() {
+        var now = new Date();
+        var start = ym(now.getFullYear(), now.getMonth());
+        return {
+            start: start,
+            end: "2029-12",
+            rate: 10,
+            startInvested: 0,
+            startCash: 0,
+            phases: [
+                { start: start,                     income: 2500,  expenses: 1500, invest: 800 },
+                { start: addMonths(start, 12),      income: 5000,  expenses: 2500, invest: 2000 },
+                { start: addMonths(start, 24),      income: 10000, expenses: 4000, invest: 5000 }
+            ]
+        };
+    }
+
+    /* ---------- month helpers: a month is the string "YYYY-MM" ---------- */
+    function ym(year, monthIdx) {
+        return year + "-" + String(monthIdx + 1).padStart(2, "0");
+    }
+    function toIndex(s) {
+        var p = String(s).split("-");
+        return parseInt(p[0], 10) * 12 + (parseInt(p[1], 10) - 1);
+    }
+    function fromIndex(i) {
+        return ym(Math.floor(i / 12), i % 12);
+    }
+    function addMonths(s, n) { return fromIndex(toIndex(s) + n); }
+
+    var MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    var MONTHS_LONG = ["January", "February", "March", "April", "May", "June", "July",
+                       "August", "September", "October", "November", "December"];
+    function labelShort(i) { return MONTHS[i % 12] + " " + Math.floor(i / 12); }
+    function labelLong(i) { return MONTHS_LONG[i % 12] + " " + Math.floor(i / 12); }
+
+    /* ---------- formatting ---------- */
+    var brl = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 });
+    function money(v) { return brl.format(Math.round(v)); }
+    function moneyAxis(v, compact) {
+        var a = Math.abs(v);
+        var prefix = compact ? "" : "R$ ";
+        if (a >= 1000000) return prefix + (v / 1000000).toFixed(a >= 10000000 ? 0 : 1).replace(".", ",") + " mi";
+        if (a >= 1000) return prefix + Math.round(v / 1000) + " mil";
+        return prefix + Math.round(v);
+    }
+
+    /* ---------- state ---------- */
+    var STORAGE_KEY = "caleshi.projection.v1";
+    var state = load();
+
+    function load() {
+        var base = defaults();
+        try {
+            var raw = localStorage.getItem(STORAGE_KEY);
+            if (raw) {
+                var saved = JSON.parse(raw);
+                if (saved && Array.isArray(saved.phases) && saved.phases.length === 3) return saved;
+            }
+        } catch (e) { /* storage unavailable — defaults are fine */ }
+        return base;
+    }
+    function save() {
+        try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (e) { /* ignore */ }
+    }
+
+    /* Keep the timeline coherent: phase 1 opens the projection, each phase starts
+       after the previous one, and the projection ends after it begins. */
+    function normalize() {
+        state.phases[0].start = state.start;
+        var s = toIndex(state.start);
+        for (var i = 1; i < 3; i++) {
+            var idx = toIndex(state.phases[i].start);
+            if (idx <= toIndex(state.phases[i - 1].start)) idx = toIndex(state.phases[i - 1].start) + 1;
+            state.phases[i].start = fromIndex(idx);
+        }
+        if (toIndex(state.end) < toIndex(state.phases[2].start)) state.end = state.phases[2].start;
+        if (toIndex(state.end) < s) state.end = state.start;
+        state.rate = clamp(state.rate, 0, 40);
+        state.startInvested = Math.max(0, state.startInvested);
+        state.startCash = Math.max(0, state.startCash);
+        state.phases.forEach(function (p) {
+            p.income = clamp(p.income, 0, 100000);
+            p.expenses = clamp(p.expenses, 0, 100000);
+            p.invest = clamp(p.invest, 0, 100000);
+        });
+    }
+    function clamp(v, lo, hi) {
+        v = Number(v);
+        if (!isFinite(v)) v = lo;
+        return Math.min(hi, Math.max(lo, v));
+    }
+
+    function phaseAt(monthIdx) {
+        var p = 0;
+        for (var i = 1; i < 3; i++) if (monthIdx >= toIndex(state.phases[i].start)) p = i;
+        return p;
+    }
+
+    /* ---------- the simulation ---------- */
+    function simulate() {
+        normalize();
+        var startIdx = toIndex(state.start);
+        var endIdx = toIndex(state.end);
+        var n = endIdx - startIdx + 1;
+        var r = Math.pow(1 + state.rate / 100, 1 / 12) - 1;
+
+        var portfolio = state.startInvested;
+        var principal = state.startInvested;   // portion of the portfolio that is money put in
+        var cash = state.startCash;
+        var contributed = 0;                    // new money invested during the projection
+        var shortfall = false;
+        var capped = [false, false, false];     // phases that could not invest the full amount
+
+        var points = [{
+            idx: startIdx - 1, principal: principal, growth: 0, cash: cash,
+            total: portfolio + cash, phase: phaseAt(startIdx)
+        }];
+
+        for (var t = startIdx; t <= endIdx; t++) {
+            var ph = state.phases[phaseAt(t)];
+            portfolio *= 1 + r;
+
+            // You can only invest what the month actually leaves you, plus the cash you hold.
+            var invest = Math.max(0, Math.min(ph.invest, ph.income - ph.expenses + cash));
+            capped[phaseAt(t)] = capped[phaseAt(t)] || invest < ph.invest - 0.5;
+            portfolio += invest;
+            principal += invest;
+            contributed += invest;
+
+            cash += ph.income - ph.expenses - invest;
+
+            if (cash < 0) {
+                // A month still in the red is covered by selling investments before it becomes debt.
+                var take = Math.min(-cash, portfolio);
+                portfolio -= take;
+                if (principal > portfolio) principal = portfolio;
+                cash += take;
+                if (cash < -0.5) shortfall = true;
+            }
+
+            points.push({
+                idx: t,
+                principal: principal,
+                growth: Math.max(0, portfolio - principal),
+                cash: cash,
+                total: portfolio + cash,
+                phase: phaseAt(t)
+            });
+        }
+
+        return {
+            points: points, months: n, startIdx: startIdx, endIdx: endIdx,
+            portfolio: portfolio, principal: principal, contributed: contributed,
+            growth: Math.max(0, portfolio - principal), cash: cash,
+            total: portfolio + cash, shortfall: shortfall, capped: capped
+        };
+    }
+
+    /* ---------- chart ---------- */
+    var chartEl = document.getElementById("chart");
+    var wrapEl = document.getElementById("chartWrap");
+    var tipEl = document.getElementById("tooltip");
+    var M = { top: 18, right: 18, bottom: 34, left: 68 };
+    var geom = null;   // kept for the hover layer
+
+    function chartWidth() { return Math.max(320, wrapEl.clientWidth || 900); }
+    function setMargins(W) {
+        M.left = W < 560 ? 50 : 68;
+        M.right = W < 560 ? 12 : 18;
+    }
+
+    function niceTicks(max) {
+        if (max <= 0) return [0, 1];
+        var raw = max / 4;
+        var mag = Math.pow(10, Math.floor(Math.log10(raw)));
+        var step = [1, 2, 2.5, 5, 10].map(function (m) { return m * mag; })
+            .filter(function (s) { return s >= raw; })[0] || 10 * mag;
+        var ticks = [];
+        for (var v = 0; v <= max + step * 0.001; v += step) ticks.push(v);
+        return ticks;
+    }
+
+    function esc(s) {
+        return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    }
+
+    function drawChart(sim) {
+        var W = chartWidth();
+        setMargins(W);
+        var narrow = W < 560;
+        var H = narrow ? 300 : 380;
+        var plotW = W - M.left - M.right;
+        var plotH = H - M.top - M.bottom;
+        var pts = sim.points;
+
+        var maxTotal = pts.reduce(function (m, p) { return Math.max(m, p.total); }, 0);
+        var ticks = niceTicks(maxTotal * 1.06);
+        var yMax = ticks[ticks.length - 1] || 1;
+
+        function X(i) { return M.left + (pts.length === 1 ? 0 : (i / (pts.length - 1)) * plotW); }
+        function Y(v) { return M.top + plotH - (v / yMax) * plotH; }
+
+        geom = { W: W, H: H, plotW: plotW, plotH: plotH, X: X, Y: Y, pts: pts };
+
+        function band(lower, upper) {
+            var d = "M " + X(0) + " " + Y(upper(pts[0]));
+            for (var i = 1; i < pts.length; i++) d += " L " + X(i) + " " + Y(upper(pts[i]));
+            for (var j = pts.length - 1; j >= 0; j--) d += " L " + X(j) + " " + Y(lower(pts[j]));
+            return d + " Z";
+        }
+        function line(fn) {
+            var d = "M " + X(0) + " " + Y(fn(pts[0]));
+            for (var i = 1; i < pts.length; i++) d += " L " + X(i) + " " + Y(fn(pts[i]));
+            return d;
+        }
+
+        var l0 = function () { return 0; };
+        var l1 = function (p) { return p.principal; };
+        var l2 = function (p) { return p.principal + p.growth; };
+        var l3 = function (p) { return p.total; };
+
+        var svg = "";
+
+        // grid + y axis
+        ticks.forEach(function (t) {
+            svg += '<line x1="' + M.left + '" x2="' + (W - M.right) + '" y1="' + Y(t) + '" y2="' + Y(t) +
+                   '" stroke="rgba(255,255,255,0.07)" stroke-width="1"/>';
+            svg += '<text x="' + (M.left - 8) + '" y="' + (Y(t) + 4) + '" text-anchor="end" font-size="11" fill="#94a3b8">' +
+                   esc(moneyAxis(t, narrow)) + "</text>";
+        });
+
+        // stacked bands, bottom to top
+        svg += '<path d="' + band(l0, l1) + '" fill="var(--series-1)" fill-opacity="0.85"/>';
+        svg += '<path d="' + band(l1, l2) + '" fill="var(--series-2)" fill-opacity="0.85"/>';
+        svg += '<path d="' + band(l2, l3) + '" fill="var(--series-3)" fill-opacity="0.85"/>';
+        // 2px surface gap between stacked segments
+        svg += '<path d="' + line(l1) + '" fill="none" stroke="#16203a" stroke-width="2"/>';
+        svg += '<path d="' + line(l2) + '" fill="none" stroke="#16203a" stroke-width="2"/>';
+        svg += '<path d="' + line(l3) + '" fill="none" stroke="#f8fafc" stroke-width="2" stroke-opacity="0.9"/>';
+
+        // phase dividers, mirroring the sketch's vertical annotation lines
+        var lastDividerX = null;
+        for (var i = 1; i < 3; i++) {
+            var pi = toIndex(state.phases[i].start) - sim.startIdx + 1;
+            if (pi < 1 || pi >= pts.length) continue;
+            var x = X(pi);
+            svg += '<line x1="' + x + '" x2="' + x + '" y1="' + M.top + '" y2="' + (M.top + plotH) +
+                   '" stroke="' + PHASE_COLORS[i] + '" stroke-opacity="0.75" stroke-width="1.5" stroke-dasharray="4 5"/>';
+            if (narrow) continue;   // the phase strip above the plot already names them
+            var anchor = x > W - 150 ? "end" : "start";
+            var dx = anchor === "end" ? -8 : 8;
+            var row = (lastDividerX !== null && Math.abs(x - lastDividerX) < 90) ? 1 : 0;
+            lastDividerX = x;
+            svg += '<text x="' + (x + dx) + '" y="' + (M.top + 13 + row * 16) + '" text-anchor="' + anchor +
+                   '" font-size="11" font-weight="700" fill="' + PHASE_COLORS[i] + '">PHASE ' + (i + 1) + "</text>";
+        }
+
+        // x axis: year marks
+        svg += '<line x1="' + M.left + '" x2="' + (W - M.right) + '" y1="' + (M.top + plotH) + '" y2="' + (M.top + plotH) +
+               '" stroke="rgba(255,255,255,0.2)" stroke-width="1"/>';
+        var labels = [];
+        pts.forEach(function (p, i) {
+            var isFirst = i === 1, isJan = p.idx % 12 === 0, isLast = i === pts.length - 1;
+            if (!(isFirst || isJan || isLast)) return;
+            labels.push({
+                x: X(i),
+                anchor: isLast ? "end" : (isFirst ? "start" : "middle"),
+                text: (isJan && !isFirst && !isLast) ? String(Math.floor(p.idx / 12)) : labelShort(p.idx)
+            });
+        });
+        // the last label always survives; earlier ones give way when they would collide
+        function extent(l) {
+            var w = l.text.length * 6.4;
+            if (l.anchor === "start") return [l.x, l.x + w];
+            if (l.anchor === "end") return [l.x - w, l.x];
+            return [l.x - w / 2, l.x + w / 2];
+        }
+        var kept = [];
+        labels.forEach(function (l, i) {
+            var isLast = i === labels.length - 1;
+            var e = extent(l);
+            while (kept.length && extent(kept[kept.length - 1])[1] + 10 > e[0]) {
+                if (!isLast) return;
+                kept.pop();
+            }
+            kept.push(l);
+        });
+        kept.forEach(function (l) {
+            svg += '<text x="' + l.x + '" y="' + (M.top + plotH + 20) + '" text-anchor="' + l.anchor +
+                   '" font-size="11" fill="#94a3b8">' + esc(l.text) + "</text>";
+        });
+
+        // direct label on the final total
+        var last = pts[pts.length - 1];
+        var ly = Math.max(M.top + (narrow ? 12 : 44), Y(last.total) - 12);
+        svg += '<text x="' + (W - M.right) + '" y="' + ly + '" text-anchor="end" font-size="13" font-weight="700"' +
+               ' fill="#f8fafc" stroke="#16203a" stroke-width="4" paint-order="stroke" stroke-linejoin="round">' +
+               esc(money(last.total)) + "</text>";
+
+        // hover layer
+        svg += '<line id="crosshair" y1="' + M.top + '" y2="' + (M.top + plotH) +
+               '" stroke="rgba(255,255,255,0.45)" stroke-width="1" style="display:none"/>';
+        svg += '<circle id="hoverDot" r="5" fill="#f8fafc" stroke="#16203a" stroke-width="2" style="display:none"/>';
+        svg += '<rect x="' + M.left + '" y="' + M.top + '" width="' + plotW + '" height="' + plotH +
+               '" fill="transparent" id="hitArea"/>';
+
+        chartEl.setAttribute("viewBox", "0 0 " + W + " " + H);
+        chartEl.setAttribute("width", W);
+        chartEl.setAttribute("height", H);
+        chartEl.innerHTML = '<title id="chartDesc">Stacked area chart of projected net worth by month.</title>' + svg;
+
+        attachHover();
+    }
+
+    function attachHover() {
+        var hit = chartEl.querySelector("#hitArea");
+        var cross = chartEl.querySelector("#crosshair");
+        var dot = chartEl.querySelector("#hoverDot");
+        if (!hit) return;
+
+        function at(evt) {
+            var rect = chartEl.getBoundingClientRect();
+            var scale = geom.W / rect.width;
+            var px = (evt.clientX - rect.left) * scale;
+            var ratio = (px - M.left) / geom.plotW;
+            var i = Math.round(ratio * (geom.pts.length - 1));
+            i = Math.min(geom.pts.length - 1, Math.max(0, i));
+            var p = geom.pts[i];
+            var x = geom.X(i), y = geom.Y(p.total);
+
+            cross.setAttribute("x1", x); cross.setAttribute("x2", x);
+            cross.style.display = "";
+            dot.setAttribute("cx", x); dot.setAttribute("cy", y);
+            dot.style.display = "";
+
+            tipEl.innerHTML =
+                '<div class="tt-title">' + esc(labelLong(p.idx)) + " &middot; Phase " + (p.phase + 1) + "</div>" +
+                row("var(--series-1)", "Contributed", p.principal) +
+                row("var(--series-2)", "Growth", p.growth) +
+                row("var(--series-3)", "Cash", p.cash) +
+                '<div class="tt-row tt-total"><span>Net worth</span><b>' + esc(money(p.total)) + "</b></div>";
+            tipEl.classList.add("show");
+
+            var left = x / scale + 14;
+            if (left + tipEl.offsetWidth > rect.width) left = x / scale - tipEl.offsetWidth - 14;
+            tipEl.style.left = Math.max(0, left) + "px";
+            tipEl.style.top = Math.max(0, Math.min(y / scale - 20, rect.height - tipEl.offsetHeight)) + "px";
+        }
+        function row(color, label, v) {
+            return '<div class="tt-row"><span><span class="swatch" style="background:' + color + '"></span>' +
+                   label + "</span><b>" + esc(money(v)) + "</b></div>";
+        }
+        function off() {
+            cross.style.display = "none";
+            dot.style.display = "none";
+            tipEl.classList.remove("show");
+        }
+
+        hit.addEventListener("mousemove", at);
+        hit.addEventListener("mouseleave", off);
+        hit.addEventListener("touchstart", function (e) { at(e.touches[0]); }, { passive: true });
+        hit.addEventListener("touchmove", function (e) { at(e.touches[0]); }, { passive: true });
+        hit.addEventListener("touchend", off);
+    }
+
+    /* ---------- phase bar above the chart (the sketch's header strip) ---------- */
+    function drawPhaseBar(sim) {
+        var bar = document.getElementById("phaseBar");
+        var W = chartWidth();
+        setMargins(W);
+        var plotW = W - M.left - M.right;
+        var total = sim.months;
+        var html = "";
+        for (var i = 0; i < 3; i++) {
+            var from = Math.max(toIndex(state.phases[i].start), sim.startIdx);
+            var to = i < 2 ? Math.min(toIndex(state.phases[i + 1].start) - 1, sim.endIdx) : sim.endIdx;
+            var len = Math.max(0, to - from + 1);
+            var pct = total ? (len / total) * 100 : 0;
+            var px = (pct / 100) * plotW;
+            var name = px < 92 ? "P" + (i + 1) : "Phase " + (i + 1);
+            var meta = px < 132 ? "" : '<span class="meta">' + esc(money(state.phases[i].income)) + "/mo &middot; " + len + " mo</span>";
+            html += '<div class="phase-seg" style="width:' + pct + '%;background:' + PHASE_COLORS[i] + '14">' +
+                    '<span class="name" style="color:' + PHASE_COLORS[i] + '">' + name + "</span>" + meta + "</div>";
+        }
+        bar.innerHTML = html;
+        bar.style.marginLeft = M.left + "px";
+        bar.style.marginRight = M.right + "px";
+    }
+
+    /* ---------- controls ---------- */
+    function buildPhaseControls() {
+        var host = document.getElementById("phaseControls");
+        host.innerHTML = state.phases.map(function (p, i) {
+            var id = function (k) { return "p" + i + k; };
+            return '<div class="phase-card" style="--accent:' + PHASE_COLORS[i] + '">' +
+                '<h3 style="color:' + PHASE_COLORS[i] + '">Phase ' + (i + 1) + "</h3>" +
+                '<p class="range" id="' + id("range") + '"></p>' +
+                field(id("income"), "Monthly income", p.income) +
+                field(id("expenses"), "Monthly expenses", p.expenses) +
+                field(id("invest"), "Invested per month", p.invest) +
+                '<p class="leftover" id="' + id("left") + '"></p>' +
+                "</div>";
+        }).join("");
+
+        state.phases.forEach(function (p, i) {
+            ["income", "expenses", "invest"].forEach(function (key) {
+                var el = document.getElementById("p" + i + key);
+                el.addEventListener("input", function () {
+                    state.phases[i][key] = Number(el.value);
+                    render();
+                });
+            });
+        });
+    }
+    function field(id, label, value) {
+        return '<div class="field"><label for="' + id + '">' + label + ' <b id="' + id + 'val">' + esc(money(value)) + "</b></label>" +
+               '<input type="range" id="' + id + '" min="0" max="20000" step="100" value="' + value + '"></div>';
+    }
+
+    function syncControls(sim) {
+        document.getElementById("inpStart").value = state.start;
+        document.getElementById("inpP2").value = state.phases[1].start;
+        document.getElementById("inpP3").value = state.phases[2].start;
+        document.getElementById("inpEnd").value = state.end;
+        document.getElementById("inpRate").value = state.rate;
+        document.getElementById("inpStartInv").value = state.startInvested;
+        document.getElementById("inpStartCash").value = state.startCash;
+
+        state.phases.forEach(function (p, i) {
+            ["income", "expenses", "invest"].forEach(function (key) {
+                var el = document.getElementById("p" + i + key);
+                if (Number(el.value) !== p[key]) el.value = p[key];
+                document.getElementById("p" + i + key + "val").textContent = money(p[key]);
+            });
+            var from = toIndex(p.start);
+            var to = i < 2 ? toIndex(state.phases[i + 1].start) - 1 : sim.endIdx;
+            document.getElementById("p" + i + "range").textContent =
+                labelShort(from) + " → " + labelShort(Math.max(from, to)) + "  (" + Math.max(0, to - from + 1) + " months)";
+
+            var left = p.income - p.expenses - p.invest;
+            var box = document.getElementById("p" + i + "left");
+            box.innerHTML = (left >= 0 ? "Left over as cash: <b>" : "Monthly gap: <b>") + esc(money(left)) + "</b> / month";
+            box.classList.toggle("negative", left < 0);
+        });
+    }
+
+    function bindSettings() {
+        function bindMonth(id, apply) {
+            var el = document.getElementById(id);
+            el.addEventListener("change", function () {
+                if (!el.value) return;
+                apply(el.value);
+                render();
+            });
+        }
+        bindMonth("inpStart", function (v) {
+            var shift = toIndex(v) - toIndex(state.start);
+            state.start = v;
+            state.phases[1].start = addMonths(state.phases[1].start, shift);
+            state.phases[2].start = addMonths(state.phases[2].start, shift);
+        });
+        bindMonth("inpP2", function (v) { state.phases[1].start = v; });
+        bindMonth("inpP3", function (v) { state.phases[2].start = v; });
+        bindMonth("inpEnd", function (v) { state.end = v; });
+
+        [["inpRate", "rate"], ["inpStartInv", "startInvested"], ["inpStartCash", "startCash"]].forEach(function (pair) {
+            var el = document.getElementById(pair[0]);
+            el.addEventListener("input", function () { state[pair[1]] = Number(el.value); render(); });
+        });
+
+        document.getElementById("btnReset").addEventListener("click", function () {
+            state = defaults();
+            buildPhaseControls();
+            render();
+        });
+
+        var btn = document.getElementById("btnTable");
+        btn.addEventListener("click", function () {
+            var card = document.getElementById("tableCard");
+            var open = card.hasAttribute("hidden");
+            if (open) card.removeAttribute("hidden"); else card.setAttribute("hidden", "");
+            btn.setAttribute("aria-expanded", String(open));
+            btn.innerHTML = '<i class="fas fa-table" aria-hidden="true"></i> ' +
+                (open ? "Hide year-by-year table" : "Show year-by-year table");
+        });
+    }
+
+    /* ---------- summary + table ---------- */
+    function drawSummary(sim) {
+        document.getElementById("heroDate").textContent = labelLong(sim.endIdx);
+        document.getElementById("heroTotal").textContent = money(sim.total);
+        document.getElementById("heroCaption").textContent =
+            sim.months + " months from " + labelLong(sim.startIdx) + " · " +
+            money(sim.contributed) + " invested along the way · " + state.rate + "% a year";
+
+        document.getElementById("statPortfolio").textContent = money(sim.portfolio);
+        document.getElementById("statContrib").textContent = money(sim.principal);
+        document.getElementById("statGrowth").textContent = money(sim.growth);
+        document.getElementById("statCash").textContent = money(sim.cash);
+
+        var warn = document.getElementById("warnBox");
+        var msgs = [];
+        sim.capped.forEach(function (isCapped, i) {
+            if (isCapped) {
+                msgs.push("Phase " + (i + 1) + " asks to invest more than it has available, so some months invest only what is left after expenses.");
+            }
+        });
+        if (sim.shortfall) msgs.push("The plan runs out of money: expenses outlast both the cash and the portfolio.");
+        document.getElementById("warnText").textContent = msgs.join(" ");
+        warn.classList.toggle("show", msgs.length > 0);
+    }
+
+    function drawTable(sim) {
+        var rows = sim.points.filter(function (p, i) {
+            return i > 0 && (p.idx % 12 === 11 || i === sim.points.length - 1);
+        });
+        document.getElementById("tableBody").innerHTML = rows.map(function (p) {
+            return "<tr><td>" + esc(labelShort(p.idx)) + "</td><td>" + (p.phase + 1) + "</td><td>" +
+                esc(money(p.principal)) + "</td><td>" + esc(money(p.growth)) + "</td><td>" +
+                esc(money(p.cash)) + "</td><td><b>" + esc(money(p.total)) + "</b></td></tr>";
+        }).join("");
+    }
+
+    /* ---------- render ---------- */
+    var lastSim = null;
+    function render() {
+        var sim = simulate();
+        lastSim = sim;
+        drawSummary(sim);
+        drawPhaseBar(sim);
+        drawChart(sim);
+        drawTable(sim);
+        syncControls(sim);
+        save();
+    }
+
+    buildPhaseControls();
+    bindSettings();
+    render();
+
+    var resizeTimer;
+    window.addEventListener("resize", function () {
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(function () { if (lastSim) { drawPhaseBar(lastSim); drawChart(lastSim); } }, 120);
+    });
+})();
+</script>
+</body>
+</html>
