@@ -148,8 +148,8 @@
 
         .legend { display: flex; flex-wrap: wrap; gap: 16px; margin-top: 14px; font-size: 0.82rem; color: var(--text-secondary); }
         .legend > span { display: inline-flex; align-items: center; gap: 8px; }
-        .key-line { width: 16px; height: 0; border-top-width: 2px; border-top-style: solid; flex: none; }
-        .key-band { width: 16px; height: 12px; border-radius: 3px; flex: none; }
+        .key-line { display: inline-block; width: 16px; height: 0; border-top-width: 2px; border-top-style: solid; flex: none; }
+        .key-band { display: inline-block; width: 16px; height: 12px; border-radius: 3px; flex: none; }
 
         .card-head {
             display: flex; flex-wrap: wrap; gap: 12px;
@@ -203,9 +203,14 @@
             outline: 2px solid #60a5fa; outline-offset: 2px;
         }
 
-        .leftover { font-size: 0.76rem; color: var(--text-muted); margin-top: 12px; }
-        .leftover b { color: var(--series-3); }
-        .leftover.negative b { color: var(--warn); }
+        .budget {
+            display: flex; height: 8px; border-radius: 5px; overflow: hidden; margin-top: 18px;
+            background: rgba(255, 255, 255, 0.06); gap: 2px;
+        }
+        .budget span { display: block; height: 100%; }
+
+        .leftover { font-size: 0.76rem; color: var(--text-muted); margin-top: 10px; line-height: 1.6; }
+        .leftover b { color: var(--text-secondary); font-weight: 600; }
 
         .settings-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; }
         .settings-grid .field { margin-bottom: 0; }
@@ -267,6 +272,7 @@
     <section class="card" aria-labelledby="phasesLabel">
         <p class="section-title" id="phasesLabel">Adjust the phases</p>
         <div class="phase-grid" id="phaseControls"></div>
+        <p class="hint">Expenses plus investment can never exceed a phase's income — the bar under each phase shows how the money splits: <span class="key-band" style="background:#64748b;vertical-align:middle"></span> spent, <span class="key-band" style="background:var(--series-1);vertical-align:middle"></span> invested, <span class="key-band" style="background:var(--series-3);vertical-align:middle"></span> left as cash.</p>
     </section>
 
     <section class="card" aria-labelledby="settingsLabel">
@@ -440,8 +446,8 @@
         for (var k = 0; k < 3; k++) phaseStarts[k] = toIndex(state.phases[k].start);
         state.phases.forEach(function (p) {
             p.income = clamp(p.income, 0, 100000);
-            p.expenses = clamp(p.expenses, 0, 100000);
-            p.invest = clamp(p.invest, 0, 100000);
+            p.expenses = clamp(p.expenses, 0, p.income);
+            p.invest = clamp(p.invest, 0, p.income - p.expenses);
         });
     }
     function clamp(v, lo, hi) {
@@ -910,6 +916,7 @@
                 field(id("income"), "Monthly income", p.income) +
                 field(id("expenses"), "Monthly expenses", p.expenses) +
                 field(id("invest"), "Invested per month", p.invest) +
+                '<div class="budget" id="' + id("bar") + '" aria-hidden="true"></div>' +
                 '<p class="leftover" id="' + id("left") + '"></p>' +
                 "</div>";
         }).join("");
@@ -918,11 +925,28 @@
             ["income", "expenses", "invest"].forEach(function (key) {
                 var el = document.getElementById("p" + i + key);
                 el.addEventListener("input", function () {
-                    state.phases[i][key] = Number(el.value);
+                    applyPhaseEdit(i, key, el.value);
                     scheduleRender();
                 });
             });
         });
+    }
+
+    /* A phase can never spend and invest more than it earns. Investment is the
+       flexible part, so it gives way first; expenses are capped by the income. */
+    function applyPhaseEdit(i, key, raw) {
+        var p = state.phases[i];
+        var v = clamp(raw, 0, 100000);
+        if (key === "income") {
+            p.income = v;
+            p.expenses = Math.min(p.expenses, p.income);
+            p.invest = Math.min(p.invest, p.income - p.expenses);
+        } else if (key === "expenses") {
+            p.expenses = Math.min(v, p.income);
+            p.invest = Math.min(p.invest, p.income - p.expenses);
+        } else {
+            p.invest = Math.min(v, p.income - p.expenses);
+        }
     }
     function field(id, label, value) {
         return '<div class="field"><label for="' + id + '">' + label + ' <b id="' + id + 'val">' + esc(money(value)) + "</b></label>" +
@@ -962,10 +986,20 @@
             document.getElementById("p" + i + "range").textContent =
                 labelShort(from) + " → " + labelShort(Math.max(from, to)) + "  (" + Math.max(0, to - from + 1) + " months)";
 
+            // expenses and investment are bounded by the income, so their sliders are too
+            var room = Math.max(100, p.income);
+            document.getElementById("p" + i + "expenses").max = room;
+            document.getElementById("p" + i + "invest").max = room;
+
             var left = p.income - p.expenses - p.invest;
-            var box = document.getElementById("p" + i + "left");
-            box.innerHTML = (left >= 0 ? "Left over as cash: <b>" : "Monthly gap: <b>") + esc(money(left)) + "</b> / month";
-            box.classList.toggle("negative", left < 0);
+            var share = function (v) { return p.income > 0 ? (v / p.income) * 100 : 0; };
+            document.getElementById("p" + i + "bar").innerHTML =
+                '<span style="width:' + share(p.expenses) + '%;background:#64748b" title="Expenses"></span>' +
+                '<span style="width:' + share(p.invest) + '%;background:var(--series-1)" title="Invested"></span>' +
+                '<span style="width:' + share(left) + '%;background:var(--series-3)" title="Left as cash"></span>';
+            document.getElementById("p" + i + "left").innerHTML =
+                "Left over as cash: <b>" + esc(money(left)) + "</b> / month &middot; investing <b>" +
+                Math.round(share(p.invest)) + "%</b> of income";
         });
     }
 
